@@ -1,0 +1,6 @@
+*.log
+*.pdb
+*.exe
+/Debug
+/Release
+/x64
