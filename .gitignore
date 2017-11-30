@@ -1,6 +1,13 @@
 *.log
 *.pdb
 *.exe
-/Debug
-/Release
-/x64
+Debug/
+Release/
+.vs/
+x64
+*.ipch
+*.db
+*.opendb
+*.obj
+*.tlog
+.vs/Localizer/v14/.suo

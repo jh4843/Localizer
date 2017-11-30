@@ -43,6 +43,11 @@ public:
 		FLOAT m_fImagerYSpacing;
 		FLOAT m_fMagFactor;
 
+		// Frame
+		UINT m_nFrameCount;
+		UINT m_nFramePerSecond;
+		UINT m_nFrameIndex;
+
 		VOID Init()
 		{
 			m_nWidth = 0;
@@ -72,6 +77,10 @@ public:
 			m_fImageOrientationOrthogonalX = 0.0;
 			m_fImageOrientationOrthogonalY = 0.0;
 			m_fImageOrientationOrthogonalZ = 0.0;
+
+			m_nFrameCount = 0;
+			m_nFramePerSecond = 0;
+			m_nFrameIndex = 0;
 		}
 
 		BOOL IsValid()

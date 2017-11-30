@@ -86,6 +86,7 @@ CLocalizerCore::LOCALIZER_IMAGE_INFO_ CLocalizerCore::GetLocalizerImageInfo(CLLD
 	stLocalizerImageInfo.m_fImagerXSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagerXSpacing;
 	stLocalizerImageInfo.m_fImagerYSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagerYSpacing;
 
+	// TLHC
 	stLocalizerImageInfo.fRectPosX[0] = stLocalizerImageInfo.fOriginX;
 	stLocalizerImageInfo.fRectPosY[0] = stLocalizerImageInfo.fOriginY;
 	stLocalizerImageInfo.fRectPosZ[0] = stLocalizerImageInfo.fOriginZ;

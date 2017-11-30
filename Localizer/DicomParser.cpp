@@ -554,6 +554,13 @@ BOOL CDicomParser::ParseImageInfo()
 	//
 
 	pElement = FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
+	m_DicomImage.m_stImageInfo.m_nFrameCount = GetCountImage(pElement);
+
+	double dFrameTime = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_FRAME_TIME));
+	if (dFrameTime)
+	{
+		m_DicomImage.m_stImageInfo.m_nFramePerSecond = (UINT)(((double)1000 / dFrameTime) + 0.05);
+	}
 	
 	if (GetInfoImage(pElement, &dicomImage, 0) == DICOM_SUCCESS)
 	{
