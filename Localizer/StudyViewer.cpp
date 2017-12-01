@@ -75,7 +75,7 @@ void CStudyViewer::SetDisplayInstance()
 	AllocDisplayImage();
 
 	CDicomImage InPutImageDS = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
-	InPutImageDS.GetImageProcessedImage(m_pDisplayImage, imageDisplayInfo);
+	InPutImageDS.GetImageProcessedImage(m_pDisplayImage, &imageDisplayInfo);
 }
 
 void CStudyViewer::SetViewOnlySameSeries()

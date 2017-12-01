@@ -129,7 +129,7 @@ public:
 	UINT BytesPerLine(UINT nPixelCount, UINT nBitPerPixel);
 		
 	UINT GetImageSize();
-	void GetImageProcessedImage(BYTE* pOutImage, CDicomImage OutImageInfo);
+	void GetImageProcessedImage(BYTE* pOutImage, CDicomImage* pOutImageInfo);
 
 	void SetTiledPiexlData(BOOL bSet);
 	BOOL GetTiledPiexlData();

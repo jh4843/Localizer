@@ -172,7 +172,7 @@ UINT CDicomImage::GetImageSize()
 	return nSize;
 }
 
-void CDicomImage::GetImageProcessedImage(BYTE* pOutImage, CDicomImage OutImageInfo)
+void CDicomImage::GetImageProcessedImage(BYTE* pOutImage, CDicomImage* pOutImageInfo)
 {
 	if (!m_pImageData)
 	{
@@ -188,9 +188,9 @@ void CDicomImage::GetImageProcessedImage(BYTE* pOutImage, CDicomImage OutImageIn
 	float fW2 = m_stImageInfo.m_fW2;
 
 	CDicomImageProcessor* pImageProcessor = new CDicomImageProcessor;
-	CDicomImage inputDicomImage = *this;
+	CDicomImage* pInputDicomImage = this;
 
-	pImageProcessor->ProcessWindowLevel(pOutImage, OutImageInfo, inputDicomImage, fW1, fW2);
+	pImageProcessor->ProcessWindowLevel(pOutImage, pOutImageInfo, pInputDicomImage, fW1, fW2);
 
 	delete pImageProcessor;
 

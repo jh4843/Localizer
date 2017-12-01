@@ -11,21 +11,21 @@ CDicomImageProcessor::~CDicomImageProcessor()
 {
 }
 
- BOOL CDicomImageProcessor::ProcessWindowLevel(BYTE* pOutImage, CDicomImage outImageInfo, CDicomImage inputDicomImage, INT_PTR nW1, INT_PTR nW2)
+ BOOL CDicomImageProcessor::ProcessWindowLevel(BYTE* pOutImage, CDicomImage* pOutImageInfo, CDicomImage* pInputDicomImage, INT_PTR nW1, INT_PTR nW2)
 {
 	BOOL bRes = FALSE;
 
-	if (!inputDicomImage.m_stImageInfo.IsValid())
+	if (!pInputDicomImage->m_stImageInfo.IsValid())
 	{
 		return FALSE;
 	}
 
-	if (outImageInfo.m_stImageInfo.m_nWidth != inputDicomImage.m_stImageInfo.m_nWidth)
+	if (pOutImageInfo->m_stImageInfo.m_nWidth != pInputDicomImage->m_stImageInfo.m_nWidth)
 	{
 		return FALSE;
 	}
 
-	if (outImageInfo.m_stImageInfo.m_nHeight != inputDicomImage.m_stImageInfo.m_nHeight)
+	if (pOutImageInfo->m_stImageInfo.m_nHeight != pInputDicomImage->m_stImageInfo.m_nHeight)
 	{
 		return FALSE;
 	}
@@ -35,53 +35,53 @@ CDicomImageProcessor::~CDicomImageProcessor()
 		nW1 = nW2 - 1;
 	}
 
-	INT_PTR a = sizeof(inputDicomImage.m_pImageData);
+	INT_PTR a = sizeof(pInputDicomImage->m_pImageData);
 
-	switch (outImageInfo.m_stImageInfo.m_nSamplesPerPixel)
+	switch (pOutImageInfo->m_stImageInfo.m_nSamplesPerPixel)
 	{
 	case 1:
 	{
-		if (inputDicomImage.m_stImageInfo.m_nBytesPerPixel == 1)
+		if (pInputDicomImage->m_stImageInfo.m_nBytesPerPixel == 1)
 		{
-			if (outImageInfo.m_stImageInfo.m_nBytesPerPixel == 1)			// BYTE to BYTE
+			if (pOutImageInfo->m_stImageInfo.m_nBytesPerPixel == 1)			// BYTE to BYTE
 			{
-				bRes = window_level_image<BYTE, BYTE>((BYTE*)inputDicomImage.m_pImageData,
+				bRes = window_level_image<BYTE, BYTE>((BYTE*)pInputDicomImage->m_pImageData,
 					(BYTE*)pOutImage,
-					(UINT)inputDicomImage.m_stImageInfo.m_nBitsPerPixel,
-					(UINT)outImageInfo.m_stImageInfo.m_nBitsPerPixel,
-					(UINT)inputDicomImage.m_stImageInfo.m_nBytesPerLine,
-					(UINT)outImageInfo.m_stImageInfo.m_nBytesPerLine,
-					(UINT)inputDicomImage.m_stImageInfo.m_nWidth,
-					(UINT)inputDicomImage.m_stImageInfo.m_nHeight,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nBitsPerPixel,
+					(UINT)pOutImageInfo->m_stImageInfo.m_nBitsPerPixel,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nBytesPerLine,
+					(UINT)pOutImageInfo->m_stImageInfo.m_nBytesPerLine,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nWidth,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nHeight,
 					(int)nW1,
 					(int)nW2);
 			}
 		}
-		else if (inputDicomImage.m_stImageInfo.m_nBytesPerPixel == 2)
+		else if (pInputDicomImage->m_stImageInfo.m_nBytesPerPixel == 2)
 		{
-			if (outImageInfo.m_stImageInfo.m_nBytesPerPixel == 1)			// WORD to BYTE
+			if (pOutImageInfo->m_stImageInfo.m_nBytesPerPixel == 1)			// WORD to BYTE
 			{
-				bRes = window_level_image<WORD, BYTE>((WORD*)inputDicomImage.m_pImageData,
+				bRes = window_level_image<WORD, BYTE>((WORD*)pInputDicomImage->m_pImageData,
 					(BYTE*)pOutImage,
-					(UINT)inputDicomImage.m_stImageInfo.m_nBitsPerPixel,
-					(UINT)outImageInfo.m_stImageInfo.m_nBitsPerPixel,
-					(UINT)inputDicomImage.m_stImageInfo.m_nBytesPerLine,
-					(UINT)outImageInfo.m_stImageInfo.m_nBytesPerLine,
-					(UINT)inputDicomImage.m_stImageInfo.m_nWidth,
-					(UINT)inputDicomImage.m_stImageInfo.m_nHeight,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nBitsPerPixel,
+					(UINT)pOutImageInfo->m_stImageInfo.m_nBitsPerPixel,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nBytesPerLine,
+					(UINT)pOutImageInfo->m_stImageInfo.m_nBytesPerLine,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nWidth,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nHeight,
 					(int)nW1,
 					(int)nW2);
 			}
-			else if (outImageInfo.m_stImageInfo.m_nBytesPerPixel == 2)		// WORD to WORD
+			else if (pOutImageInfo->m_stImageInfo.m_nBytesPerPixel == 2)		// WORD to WORD
 			{
-				bRes = window_level_image<WORD, WORD>((WORD*)inputDicomImage.m_pImageData,
+				bRes = window_level_image<WORD, WORD>((WORD*)pInputDicomImage->m_pImageData,
 					(WORD*)pOutImage,
-					(UINT)inputDicomImage.m_stImageInfo.m_nBitsPerPixel,
-					(UINT)outImageInfo.m_stImageInfo.m_nBitsPerPixel,
-					(UINT)inputDicomImage.m_stImageInfo.m_nBytesPerLine,
-					(UINT)outImageInfo.m_stImageInfo.m_nBytesPerLine,
-					(UINT)inputDicomImage.m_stImageInfo.m_nWidth,
-					(UINT)inputDicomImage.m_stImageInfo.m_nHeight,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nBitsPerPixel,
+					(UINT)pOutImageInfo->m_stImageInfo.m_nBitsPerPixel,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nBytesPerLine,
+					(UINT)pOutImageInfo->m_stImageInfo.m_nBytesPerLine,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nWidth,
+					(UINT)pInputDicomImage->m_stImageInfo.m_nHeight,
 					(int)nW1,
 					(int)nW2);
 			}
@@ -90,20 +90,20 @@ CDicomImageProcessor::~CDicomImageProcessor()
 	break;
 	case 3:
 	{
-		if (outImageInfo.m_stImageInfo.m_nSamplesPerPixel == 3)
+		if (pOutImageInfo->m_stImageInfo.m_nSamplesPerPixel == 3)
 		{
-			if (inputDicomImage.m_stImageInfo.m_nBytesPerPixel == 1)
+			if (pInputDicomImage->m_stImageInfo.m_nBytesPerPixel == 1)
 			{
-				if (outImageInfo.m_stImageInfo.m_nBytesPerPixel == 1)		// RGB to RGB
+				if (pOutImageInfo->m_stImageInfo.m_nBytesPerPixel == 1)		// RGB to RGB
 				{
-					bRes = window_level_image<BYTE, BYTE>((BYTE*)inputDicomImage.m_pImageData,
+					bRes = window_level_image<BYTE, BYTE>((BYTE*)pInputDicomImage->m_pImageData,
 						(BYTE*)pOutImage,
-						(UINT)inputDicomImage.m_stImageInfo.m_nBitsPerPixel,
-						(UINT)outImageInfo.m_stImageInfo.m_nBitsPerPixel,
-						(UINT)inputDicomImage.m_stImageInfo.m_nBytesPerLine,
-						(UINT)outImageInfo.m_stImageInfo.m_nBytesPerLine,
-						(UINT)(inputDicomImage.m_stImageInfo.m_nWidth * 3),
-						(UINT)inputDicomImage.m_stImageInfo.m_nHeight,
+						(UINT)pInputDicomImage->m_stImageInfo.m_nBitsPerPixel,
+						(UINT)pOutImageInfo->m_stImageInfo.m_nBitsPerPixel,
+						(UINT)pInputDicomImage->m_stImageInfo.m_nBytesPerLine,
+						(UINT)pOutImageInfo->m_stImageInfo.m_nBytesPerLine,
+						(UINT)(pInputDicomImage->m_stImageInfo.m_nWidth * 3),
+						(UINT)pInputDicomImage->m_stImageInfo.m_nHeight,
 						(int)nW1,
 						(int)nW2);
 				}

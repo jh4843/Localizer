@@ -8,7 +8,7 @@ public:
 	~CDicomImageProcessor();
 
 public:
-	BOOL ProcessWindowLevel(BYTE* pOutImage, CDicomImage outImageInfo, CDicomImage inputDicomImage, INT_PTR nW1, INT_PTR nW2);
+	BOOL ProcessWindowLevel(BYTE* pOutImage, CDicomImage* pOutImageInfo, CDicomImage* pInputDicomImage, INT_PTR nW1, INT_PTR nW2);
 	BOOL AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomImage* pImageInfo);
 };
 
