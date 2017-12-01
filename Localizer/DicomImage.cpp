@@ -11,16 +11,19 @@ CDicomImage::CDicomImage()
 	m_stImageInfo.Init();
 }
 
+CDicomImage::CDicomImage(const CDicomImage& dicomImage)
+{
+	*this = dicomImage;
+}
 
 CDicomImage::~CDicomImage()
 {
-	//FreeDicomImage();
+	FreeDicomImage();
 }
 
 void CDicomImage::Init()
 {
 	m_stImageInfo.Init();
-	FreeDicomImage();
 }
 
 BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle)
@@ -77,7 +80,7 @@ BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle)
 		if (pBitmapHandle->pLUT)
 		{
 			CDicomImageProcessor* pDicomImageProcessor = new CDicomImageProcessor;
-			if (!pDicomImageProcessor->AdjustDICOMLut(m_pImageData, pBitmapHandle->pLUT, *this))
+			if (!pDicomImageProcessor->AdjustDICOMLut(m_pImageData, pBitmapHandle->pLUT, this))
 			{
 				FreeDicomImage();
 				delete pDicomImageProcessor;
@@ -212,6 +215,12 @@ void CDicomImage::operator=(const CDicomImage& obj)
 	FreeDicomImage();
 	int nPixelDataSize = GetImageSize();
 	m_pImageData = (BYTE*)::VirtualAlloc(NULL, nPixelDataSize, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
+
+	if (!m_pImageData)
+	{
+		AfxThrowMemoryException();
+		return;
+	}
 
 	memcpy_s(m_pImageData, nPixelDataSize, obj.m_pImageData, nPixelDataSize);
 }

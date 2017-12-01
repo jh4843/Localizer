@@ -116,7 +116,7 @@ CDicomImageProcessor::~CDicomImageProcessor()
 	return bRes;
 }
 
-BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomImage imageinfoDicom)
+BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomImage* pImageinfoDicom)
 {
 	if (!pLUT)
 	{
@@ -130,13 +130,13 @@ BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomIma
 
 	BOOL bRet = FALSE;
 
-	switch (imageinfoDicom.m_stImageInfo.m_nTotalAllocatedBytes)
+	switch (pImageinfoDicom->m_stImageInfo.m_nTotalAllocatedBytes)
 	{
 	case 1:
 	{
-		if (imageinfoDicom.m_stImageInfo.m_nSamplesPerPixel == 1)
+		if (pImageinfoDicom->m_stImageInfo.m_nSamplesPerPixel == 1)
 		{
-			if (adjust_dicom_lut<BYTE>((BYTE*)pImage, (RGBQUAD*)pLUT, (UINT)imageinfoDicom.m_stImageInfo.m_nWidth, (UINT)imageinfoDicom.m_stImageInfo.m_nHeight, (UINT)imageinfoDicom.m_stImageInfo.m_nBitsPerPixel))
+			if (adjust_dicom_lut<BYTE>((BYTE*)pImage, (RGBQUAD*)pLUT, (UINT)pImageinfoDicom->m_stImageInfo.m_nWidth, (UINT)pImageinfoDicom->m_stImageInfo.m_nHeight, (UINT)pImageinfoDicom->m_stImageInfo.m_nBitsPerPixel))
 			{
 				bRet = TRUE;
 			}
@@ -145,9 +145,9 @@ BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomIma
 	break;
 	case 2:
 	{
-		if (imageinfoDicom.m_stImageInfo.m_nSamplesPerPixel == 1)
+		if (pImageinfoDicom->m_stImageInfo.m_nSamplesPerPixel == 1)
 		{
-			if (adjust_dicom_lut<WORD>((WORD*)pImage, (RGBQUAD*)pLUT, (UINT)imageinfoDicom.m_stImageInfo.m_nWidth, (UINT)imageinfoDicom.m_stImageInfo.m_nHeight, (UINT)imageinfoDicom.m_stImageInfo.m_nBitsPerPixel))
+			if (adjust_dicom_lut<WORD>((WORD*)pImage, (RGBQUAD*)pLUT, (UINT)pImageinfoDicom->m_stImageInfo.m_nWidth, (UINT)pImageinfoDicom->m_stImageInfo.m_nHeight, (UINT)pImageinfoDicom->m_stImageInfo.m_nBitsPerPixel))
 			{
 				bRet = TRUE;
 			}
@@ -156,9 +156,9 @@ BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomIma
 	break;
 	case 3:
 	{
-		if (imageinfoDicom.m_stImageInfo.m_nSamplesPerPixel == 3)
+		if (pImageinfoDicom->m_stImageInfo.m_nSamplesPerPixel == 3)
 		{
-			if (adjust_dicom_lut<RGBTRIPLE*>((RGBTRIPLE**)&pImage, (RGBQUAD*)pLUT, (UINT)imageinfoDicom.m_stImageInfo.m_nWidth, (UINT)imageinfoDicom.m_stImageInfo.m_nHeight, (UINT)imageinfoDicom.m_stImageInfo.m_nBitsPerPixel))
+			if (adjust_dicom_lut<RGBTRIPLE*>((RGBTRIPLE**)&pImage, (RGBQUAD*)pLUT, (UINT)pImageinfoDicom->m_stImageInfo.m_nWidth, (UINT)pImageinfoDicom->m_stImageInfo.m_nHeight, (UINT)pImageinfoDicom->m_stImageInfo.m_nBitsPerPixel))
 			{
 				bRet = TRUE;
 			}
@@ -167,16 +167,16 @@ BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomIma
 	break;
 	case 4:
 	{
-		if (imageinfoDicom.m_stImageInfo.m_nSamplesPerPixel == 1)
+		if (pImageinfoDicom->m_stImageInfo.m_nSamplesPerPixel == 1)
 		{
-			if (adjust_dicom_lut<DWORD>((DWORD*)pImage, (RGBQUAD*)pLUT, (UINT)imageinfoDicom.m_stImageInfo.m_nWidth, (UINT)imageinfoDicom.m_stImageInfo.m_nHeight, (UINT)imageinfoDicom.m_stImageInfo.m_nBitsPerPixel))
+			if (adjust_dicom_lut<DWORD>((DWORD*)pImage, (RGBQUAD*)pLUT, (UINT)pImageinfoDicom->m_stImageInfo.m_nWidth, (UINT)pImageinfoDicom->m_stImageInfo.m_nHeight, (UINT)pImageinfoDicom->m_stImageInfo.m_nBitsPerPixel))
 			{
 				bRet = TRUE;
 			}
 		}
-		else if (imageinfoDicom.m_stImageInfo.m_nSamplesPerPixel == 4)
+		else if (pImageinfoDicom->m_stImageInfo.m_nSamplesPerPixel == 4)
 		{
-			if (adjust_dicom_lut<RGBQUAD*>((RGBQUAD**)&pImage, (RGBQUAD*)pLUT, (UINT)imageinfoDicom.m_stImageInfo.m_nWidth, (UINT)imageinfoDicom.m_stImageInfo.m_nHeight, (UINT)imageinfoDicom.m_stImageInfo.m_nBitsPerPixel))
+			if (adjust_dicom_lut<RGBQUAD*>((RGBQUAD**)&pImage, (RGBQUAD*)pLUT, (UINT)pImageinfoDicom->m_stImageInfo.m_nWidth, (UINT)pImageinfoDicom->m_stImageInfo.m_nHeight, (UINT)pImageinfoDicom->m_stImageInfo.m_nBitsPerPixel))
 			{
 				bRet = TRUE;
 			}

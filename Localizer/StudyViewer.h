@@ -51,9 +51,10 @@ protected:
 	
 	INT_PTR m_nCurSeriesIndex;
 	INT_PTR m_nCurInstanceIndex;
+	INT_PTR m_nCurFrameIndex;
 
 	CStudy* m_pStudy;
-	CLLDicomDS m_dsDisplayDicom;
+	CLLDicomDS* m_pDisplayDicomDS;
 
 	COleDataSourceEx* m_pDragSource;
 	COleDropTargetEx* m_pDropTarget;
@@ -71,7 +72,7 @@ private:
 	CRect m_rtImage;
 	CRect m_rtCanvas;
 
-	BOOL bOnlySeriesViewer;
+	BOOL m_bOnlySeriesViewer;
 
 public:
 	CStudyViewer& operator=(const CStudyViewer& obj);
@@ -93,6 +94,7 @@ public:
 	INT_PTR GetSeriesCount();
 	INT_PTR GetCurrentInstanceIndex();
 	INT_PTR GetCurrentSeriesIndex();
+	INT_PTR GetCurrentFrameIndex();
 	CLLDicomDS* GetDisplayingDicomDS();
 	void RedrawWnd();
 
@@ -114,7 +116,7 @@ protected:
 
 // Overriding
 protected:
-	virtual void Init(INT_PTR nCurSeriesIndex = 0, INT_PTR nCurInstanceIndex = 0);
+	virtual void Init(INT_PTR nCurSeriesIndex = 0, INT_PTR nCurInstanceIndex = 0, INT_PTR nCurFrameIndex = 0);
 	virtual BOOL CreateCtrl(CWnd* pParent);
 	virtual BOOL Draw(CDC* pDC);
 	virtual DIBINFO* GetDibInfo();

@@ -30,61 +30,61 @@ void CLocalizerCore::AddStudyViewer(CStudyViewer* pStudyViewer)
 	m_aryStudyViewer.Add(pStudyViewer);
 }
 
-CLocalizerCore::LOCALIZER_IMAGE_INFO_ CLocalizerCore::GetLocalizerImageInfo(CLLDicomDS* dsSrcDicomDS)
+CLocalizerCore::LOCALIZER_IMAGE_INFO_ CLocalizerCore::GetLocalizerImageInfo(CLLDicomDS* dsSrcDicomDS, INT_PTR nFrameIndex)
 {
 	LOCALIZER_IMAGE_INFO_ stLocalizerImageInfo;
 
 	// Row & Col
-	stLocalizerImageInfo.nRow = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_nHeight;
-	stLocalizerImageInfo.nCol = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_nWidth;
+	stLocalizerImageInfo.nRow = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_nHeight;
+	stLocalizerImageInfo.nCol = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_nWidth;
 
 	FLOAT nImageXSpacing;
 	FLOAT nImageYSpacing;
-	if (dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fPixelXSpacing <= 0)
+	if (dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelXSpacing <= nFrameIndex)
 	{
 		nImageXSpacing = 1;
 	}
 	else
 	{
-		nImageXSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fPixelXSpacing;
+		nImageXSpacing = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelXSpacing;
 	}
 
 
-	if (dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fPixelYSpacing <= 0)
+	if (dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelYSpacing <= nFrameIndex)
 	{
 		nImageYSpacing = 1;
 	}
 	else
 	{
-		nImageYSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fPixelYSpacing;
+		nImageYSpacing = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelYSpacing;
 	}
 
 
-	stLocalizerImageInfo.nRowLength = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_nWidth * nImageXSpacing;
-	stLocalizerImageInfo.nColLength = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_nHeight * nImageYSpacing;
+	stLocalizerImageInfo.nRowLength = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_nWidth * nImageXSpacing;
+	stLocalizerImageInfo.nColLength = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_nHeight * nImageYSpacing;
 
 	// Position
-	stLocalizerImageInfo.fOriginX = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagePosition_X;
-	stLocalizerImageInfo.fOriginY = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagePosition_Y;
-	stLocalizerImageInfo.fOriginZ = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagePosition_Z;
+	stLocalizerImageInfo.fOriginX = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImagePosition_X;
+	stLocalizerImageInfo.fOriginY = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImagePosition_Y;
+	stLocalizerImageInfo.fOriginZ = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImagePosition_Z;
 
 	// Orientation
-	stLocalizerImageInfo.fRowOrientX = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationRowX;
-	stLocalizerImageInfo.fRowOrientY = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationRowY;
-	stLocalizerImageInfo.fRowOrientZ = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationRowZ;
+	stLocalizerImageInfo.fRowOrientX = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationRowX;
+	stLocalizerImageInfo.fRowOrientY = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationRowY;
+	stLocalizerImageInfo.fRowOrientZ = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationRowZ;
 
-	stLocalizerImageInfo.fColOrientX = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationColX;
-	stLocalizerImageInfo.fColOrientY = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationColY;
-	stLocalizerImageInfo.fColOrientZ = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationColZ;
+	stLocalizerImageInfo.fColOrientX = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationColX;
+	stLocalizerImageInfo.fColOrientY = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationColY;
+	stLocalizerImageInfo.fColOrientZ = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationColZ;
 
-	stLocalizerImageInfo.fOrthoOrientX = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationOrthogonalX;
-	stLocalizerImageInfo.fOrthoOrientY = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationOrthogonalY;
-	stLocalizerImageInfo.fOrthoOrientZ = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImageOrientationOrthogonalZ;
+	stLocalizerImageInfo.fOrthoOrientX = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationOrthogonalX;
+	stLocalizerImageInfo.fOrthoOrientY = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationOrthogonalY;
+	stLocalizerImageInfo.fOrthoOrientZ = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImageOrientationOrthogonalZ;
 
-	stLocalizerImageInfo.m_fPixelXSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fPixelXSpacing;
-	stLocalizerImageInfo.m_fPixelYSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fPixelYSpacing;
-	stLocalizerImageInfo.m_fImagerXSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagerXSpacing;
-	stLocalizerImageInfo.m_fImagerYSpacing = dsSrcDicomDS->m_DicomImage.m_stImageInfo.m_fImagerYSpacing;
+	stLocalizerImageInfo.m_fPixelXSpacing = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelXSpacing;
+	stLocalizerImageInfo.m_fPixelYSpacing = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelYSpacing;
+	stLocalizerImageInfo.m_fImagerXSpacing = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImagerXSpacing;
+	stLocalizerImageInfo.m_fImagerYSpacing = dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fImagerYSpacing;
 
 	// TLHC
 	stLocalizerImageInfo.fRectPosX[0] = stLocalizerImageInfo.fOriginX;
@@ -120,7 +120,7 @@ void CLocalizerCore::CalcReferenceLine()
 		return;
 
 	CLLDicomDS* dsSrcDicomDS = pSrcStudyViewer->GetDisplayingDicomDS();
-	LOCALIZER_IMAGE_INFO_ stSrcLocalizerImageInfo = GetLocalizerImageInfo(dsSrcDicomDS);
+	LOCALIZER_IMAGE_INFO_ stSrcLocalizerImageInfo = GetLocalizerImageInfo(dsSrcDicomDS, pSrcStudyViewer->GetCurrentFrameIndex());
 
 	CLLDicomDS* dsDestDicomDS = nullptr;
 	LOCALIZER_IMAGE_INFO_ stDestLocalizerImageInfo;
@@ -154,7 +154,7 @@ void CLocalizerCore::CalcReferenceLine()
 
 		pStudyViewer->ClearLocalizerPoints();
 		dsDestDicomDS = pStudyViewer->GetDisplayingDicomDS();
-		stDestLocalizerImageInfo = GetLocalizerImageInfo(dsDestDicomDS);
+		stDestLocalizerImageInfo = GetLocalizerImageInfo(dsDestDicomDS, pStudyViewer->GetCurrentFrameIndex());
 
 		if (IsSamePatientOrientation(stSrcLocalizerImageInfo, stDestLocalizerImageInfo))
 			continue;

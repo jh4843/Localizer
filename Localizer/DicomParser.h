@@ -15,7 +15,7 @@ public:
 
 public:
 	CLLDicomDS::DICOM_HEADER_INFO_ m_dcmHeaderInfo;
-	CDicomImage m_DicomImage;
+	CArray<CDicomImage, CDicomImage> m_aryDicomImage;	// for multi frame
 
 	// to Control
 	BOOL m_bInitialized;
@@ -51,13 +51,13 @@ public:
 
 	int ParseNLS();
 	int& GetCurNLS();
-	CLLDicomDS GetLLDicomDS();
+	CLLDicomDS GetLLDicomDS(INT_PTR nFrameIndex = 0);
 
 	CDicomParser& operator=(const CDicomParser& obj);
 
 private:
-	FLOAT GetOrientationOrthogonalX();
-	FLOAT GetOrientationOrthogonalY();
-	FLOAT GetOrientationOrthogonalZ();
+	FLOAT GetOrientationOrthogonalX(INT_PTR nRowY, INT_PTR nRowZ, INT_PTR nColY, INT_PTR nColZ, INT_PTR nFrameIndex = 0);
+	FLOAT GetOrientationOrthogonalY(INT_PTR nRowX, INT_PTR nRowZ, INT_PTR nColX, INT_PTR nColZ, INT_PTR nFrameIndex = 0);
+	FLOAT GetOrientationOrthogonalZ(INT_PTR nRowX, INT_PTR nRowY, INT_PTR nColX, INT_PTR nColY, INT_PTR nFrameIndex = 0);
 };
 

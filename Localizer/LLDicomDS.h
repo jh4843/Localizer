@@ -32,6 +32,9 @@ public:
 		CString m_strSOPClassUID;
 		CString m_strTransferSyntaxUID;
 
+		// Frame Count
+		UINT m_nFrameCount;
+
 		void Init()
 		{
 			// File
@@ -60,13 +63,14 @@ public:
 			m_strSOPClassUID = _T("");
 			m_strTransferSyntaxUID = _T("");
 
-
+			m_nFrameCount = 0;
 		}
 
 	}DICOM_HEADER_INFO_;
 
 public:
 	CLLDicomDS();
+	CLLDicomDS(const CLLDicomDS& dsLLDicomds);
 	~CLLDicomDS();
 
 	void Init();
@@ -74,18 +78,20 @@ public:
 	CString GetSeriesID();
 	CString GetInstanceID();
 
-	CString GetPatientOrientationUp();
-	CString GetPatientOrientationDown();
-	CString GetPatientOrientationLeft();
-	CString GetPatientOrientationRight();
+	CString GetPatientOrientationUp(INT_PTR nFrameIndex = 0);
+	CString GetPatientOrientationDown(INT_PTR nFrameIndex = 0);
+	CString GetPatientOrientationLeft(INT_PTR nFrameIndex = 0);
+	CString GetPatientOrientationRight(INT_PTR nFrameIndex = 0);
 
-	BOOL IsSamePosAndOrient(CLLDicomDS dicomDS);
+	BOOL IsSamePosAndOrient(CLLDicomDS& dicomDS, INT_PTR nFrameIndex = 0);
+
+	CLLDicomDS operator=(const CLLDicomDS obj);
 
 protected:
-	BOOL IsValidPatientOrientation();
+	BOOL IsValidPatientOrientation(INT_PTR nFrameIndex = 0);
 	
 public:
 	DICOM_HEADER_INFO_ m_dcmHeaderInfo;
-	CDicomImage m_DicomImage;
+	CArray<CDicomImage, CDicomImage> m_aryDicomImage;
 };
 

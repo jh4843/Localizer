@@ -127,7 +127,7 @@ void CLayoutManager::SetSelectedStudyViewer(INT_PTR nSelectedViewerIndex)
 			for (INT_PTR iInstance = 0; iInstance < pSeries->GetInstanceArray()->GetCount(); iInstance++)
 			{
 				CInstance* pInstance = pSeries->GetInstanceArray()->GetAt(iInstance);
-				if (pInstance->GetDicomDS().IsSamePosAndOrient(*pSrcDicomDS))
+				if (pInstance->GetDicomDS()->IsSamePosAndOrient(*pSrcDicomDS))
 				{
 					pStudyViewer->SetCurrentInstanceIndex(iInstance);
 				}
@@ -264,6 +264,9 @@ void CLayoutManager::CalcLayout()
 {
 	CRect rtClient;
 	GetClientRect(&rtClient);
+
+	if (m_nViewerCount <= 0)
+		return;
 
 	INT_PTR nTotalRowCount, nTotalColCount;
 	nTotalRowCount = nTotalColCount = sqrt(m_nViewerCount);

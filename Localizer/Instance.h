@@ -21,8 +21,8 @@ public:
 	void UpdateDicomDs(CLLDicomDS dsLLDicom);
 
 	// Get
-	CDicomImage* GetDicomImage();
-	CLLDicomDS GetDicomDS();
+	CDicomImage* GetDicomImage(INT_PTR nFrameIndex);
+	CLLDicomDS* GetDicomDS();
 
 	// 
 	CInstance& operator=(const CInstance& obj);

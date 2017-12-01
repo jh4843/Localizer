@@ -32,14 +32,14 @@ void CInstance::UpdateDicomDs(CLLDicomDS dsLLDicom)
 }
 
 
-CDicomImage* CInstance::GetDicomImage()
+CDicomImage* CInstance::GetDicomImage(INT_PTR nFrameIndex)
 {
-	return &m_dsLLDicomds.m_DicomImage;
+	return &m_dsLLDicomds.m_aryDicomImage.GetAt(nFrameIndex);
 }
 
-CLLDicomDS CInstance::GetDicomDS()
+CLLDicomDS* CInstance::GetDicomDS()
 {
-	return m_dsLLDicomds;
+	return &m_dsLLDicomds;
 }
 
 CInstance& CInstance::operator=(const CInstance& obj)

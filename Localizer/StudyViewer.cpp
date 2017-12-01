@@ -8,8 +8,9 @@ CStudyViewer::CStudyViewer(INT_PTR nLayoutIndex)
 
 	m_pDragSource = nullptr;
 	m_pDropTarget = nullptr;
+	m_pDisplayDicomDS = nullptr;
 
-	bOnlySeriesViewer = FALSE;
+	m_bOnlySeriesViewer = FALSE;
 }
 
 
@@ -24,7 +25,8 @@ CStudyViewer& CStudyViewer::operator=(const CStudyViewer& obj)
 
 	m_nCurSeriesIndex = obj.m_nCurSeriesIndex;
 	m_nCurInstanceIndex = obj.m_nCurInstanceIndex;
-	m_dsDisplayDicom = obj.m_dsDisplayDicom;
+	m_pDisplayDicomDS = obj.m_pDisplayDicomDS;
+	m_nCurFrameIndex = obj.m_nCurFrameIndex;
 
 	return *this;
 }
@@ -56,10 +58,10 @@ void CStudyViewer::SetDisplayInstance()
 
 	pDisplayedInstance = pAryInstance->GetAt(m_nCurInstanceIndex);
 
-	m_dsDisplayDicom = pDisplayedInstance->GetDicomDS();
+	m_pDisplayDicomDS = pDisplayedInstance->GetDicomDS();
 
 	CDicomImage imageDisplayInfo;	// different with DICOM information
-	imageDisplayInfo = m_dsDisplayDicom.m_DicomImage;
+	imageDisplayInfo = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
 
 	imageDisplayInfo.m_stImageInfo.m_nBitsPerPixel = 8;
 	imageDisplayInfo.m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(imageDisplayInfo.m_stImageInfo.m_nBitsPerPixel);
@@ -72,19 +74,18 @@ void CStudyViewer::SetDisplayInstance()
 	FreeDisplayImage();
 	AllocDisplayImage();
 
-	m_dsDisplayDicom.m_DicomImage.GetImageProcessedImage(m_pDisplayImage, imageDisplayInfo);
-
-
+	CDicomImage InPutImageDS = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
+	InPutImageDS.GetImageProcessedImage(m_pDisplayImage, imageDisplayInfo);
 }
 
 void CStudyViewer::SetViewOnlySameSeries()
 {
-	bOnlySeriesViewer = TRUE;
+	m_bOnlySeriesViewer = TRUE;
 }
 
 void CStudyViewer::SetViewAllSeries()
 {
-	bOnlySeriesViewer = FALSE;
+	m_bOnlySeriesViewer = FALSE;
 }
 
 void CStudyViewer::SetCurrentInstanceIndex(INT_PTR nInstanceIndex)
@@ -122,9 +123,14 @@ INT_PTR CStudyViewer::GetCurrentSeriesIndex()
 	return m_nCurSeriesIndex;
 }
 
+INT_PTR CStudyViewer::GetCurrentFrameIndex()
+{
+	return m_nCurFrameIndex;
+}
+
 CLLDicomDS* CStudyViewer::GetDisplayingDicomDS()
 {
-	return &m_dsDisplayDicom;
+	return m_pDisplayDicomDS;
 }
 
 void CStudyViewer::RedrawWnd()
@@ -160,19 +166,19 @@ INT_PTR CStudyViewer::GetSeriesCount()
 	return pArySeries->GetCount();
 }
 
-void CStudyViewer::Init(INT_PTR nCurSeriesIndex, INT_PTR nCurInstanceIndex)
+void CStudyViewer::Init(INT_PTR nCurSeriesIndex, INT_PTR nCurInstanceIndex, INT_PTR nCurFrameIndex)
 {
 	m_pStudy = nullptr;
-
 	m_pDisplayImage = nullptr;
+	m_pDisplayDicomDS = nullptr;
 	
 	FreeDisplayImage();
 	
 	m_nCurSeriesIndex = nCurSeriesIndex;
 	m_nCurInstanceIndex = nCurInstanceIndex;
+	m_nCurFrameIndex = nCurFrameIndex;
 
 	m_DibInfo.Init();
-	m_dsDisplayDicom.m_DicomImage.FreeDicomImage();
 
 	m_rtCanvas = CRect(0, 0, 0, 0);
 	m_rtImage = CRect(0, 0, 0, 0);
@@ -227,12 +233,12 @@ BOOL CStudyViewer::DrawInstanceImage(CDC* pDC)
 
 	BITMAPINFOHEADER& bih = GetDibInfo()->bmiHeader;
 	bih.biSize = sizeof(BITMAPINFOHEADER);
-	bih.biWidth = m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nWidth;
-	bih.biHeight = -m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nHeight;
+	bih.biWidth = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nWidth;
+	bih.biHeight = -m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nHeight;
 	bih.biPlanes = 1;
-	bih.biBitCount = 8 * m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nSamplesPerPixel;
+	bih.biBitCount = 8 * m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nSamplesPerPixel;
 	bih.biCompression = BI_RGB;
-	bih.biSizeImage = m_dsDisplayDicom.m_DicomImage.BytesPerLine((UINT)((double)m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nWidth*(double)m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nSamplesPerPixel), 8) * m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nHeight;
+	bih.biSizeImage = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).BytesPerLine((UINT)((double)m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nWidth*(double)m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nSamplesPerPixel), 8) * m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nHeight;
 	bih.biXPelsPerMeter = 0;
 	bih.biYPelsPerMeter = 0;
 	bih.biClrUsed = 0;
@@ -334,11 +340,11 @@ BOOL CStudyViewer::DrawImageInfo(CDC* pDC)
 
 	CStringArray aryImageInfo;
 
-	CString strStudyID = m_dsDisplayDicom.GetStudyID();
+	CString strStudyID = m_pDisplayDicomDS->GetStudyID();
 	aryImageInfo.Add(strStudyID);
-	CString strSeriesID = m_dsDisplayDicom.GetSeriesID();
+	CString strSeriesID = m_pDisplayDicomDS->GetSeriesID();
 	aryImageInfo.Add(strSeriesID);
-	CString strInstanceID = m_dsDisplayDicom.GetInstanceID();
+	CString strInstanceID = m_pDisplayDicomDS->GetInstanceID();
 	aryImageInfo.Add(strInstanceID);
 
 	for (INT_PTR nIndex = 0; nIndex < aryImageInfo.GetCount(); nIndex++)
@@ -374,10 +380,10 @@ BOOL CStudyViewer::DrawPatientOrientation(CDC* pDC)
 
 	CFont* pOldFont = pDC->SelectObject(&font);
 
-	CString strPatientOrientationUp = m_dsDisplayDicom.GetPatientOrientationUp();
-	CString strPatientOrientationDown = m_dsDisplayDicom.GetPatientOrientationDown();
-	CString strPatientOrientationLeft = m_dsDisplayDicom.GetPatientOrientationLeft();
-	CString strPatientOrientationRight = m_dsDisplayDicom.GetPatientOrientationRight();
+	CString strPatientOrientationUp = m_pDisplayDicomDS->GetPatientOrientationUp(m_nCurFrameIndex);
+	CString strPatientOrientationDown = m_pDisplayDicomDS->GetPatientOrientationDown(m_nCurFrameIndex);
+	CString strPatientOrientationLeft = m_pDisplayDicomDS->GetPatientOrientationLeft(m_nCurFrameIndex);
+	CString strPatientOrientationRight = m_pDisplayDicomDS->GetPatientOrientationRight(m_nCurFrameIndex);
 
 	CSize sizeMax = pDC->GetTextExtent(strPatientOrientationRight);
 
@@ -416,7 +422,7 @@ void CStudyViewer::ChangeInstanceIndex(BOOL bIsIncrease)
 	{
 		if (m_nCurInstanceIndex >= nLastIndex)
 		{
-			if (bOnlySeriesViewer == FALSE)
+			if (m_bOnlySeriesViewer == FALSE)
 			{
 				ChangeSeriesIndex(TRUE);
 			}
@@ -434,7 +440,7 @@ void CStudyViewer::ChangeInstanceIndex(BOOL bIsIncrease)
 	{
 		if (m_nCurInstanceIndex <= 0)
 		{
-			if (bOnlySeriesViewer == FALSE)
+			if (m_bOnlySeriesViewer == FALSE)
 			{
 				ChangeSeriesIndex(FALSE);
 			}
@@ -484,15 +490,39 @@ void CStudyViewer::ChangeSeriesIndex(BOOL bIsIncrease)
 
 void CStudyViewer::ChangeInstanceImageByWheel(short zDelta)
 {
-	INT_PTR nLastIndex = GetInstanceCount() - 1;
+	INT_PTR nLastFrameIndex = m_pDisplayDicomDS->m_aryDicomImage.GetCount() - 1;
 
 	if (zDelta > 0)
 	{
-		ChangeInstanceIndex(FALSE);
+		if (m_nCurFrameIndex  == nLastFrameIndex && nLastFrameIndex == 0)
+		{
+			ChangeInstanceIndex(FALSE);
+			m_nCurFrameIndex = 0;
+		}
+		else
+		{
+			m_nCurFrameIndex--;
+			if (m_nCurFrameIndex < 0)
+			{
+				m_nCurFrameIndex = nLastFrameIndex;
+			}
+		}
 	}
 	else
 	{
-		ChangeInstanceIndex(TRUE);
+		if (m_nCurFrameIndex == nLastFrameIndex && nLastFrameIndex == 0)
+		{
+			ChangeInstanceIndex(TRUE);
+			m_nCurFrameIndex = 0;
+		}
+		else
+		{
+			m_nCurFrameIndex++;
+			if (m_nCurFrameIndex > nLastFrameIndex)
+			{
+				m_nCurFrameIndex = 0;
+			}
+		}
 	}
 
 	SetDisplayInstance();
@@ -570,7 +600,11 @@ BOOL CStudyViewer::CalcLayout()
 	BOOL bRes = TRUE;
 
 	GetClientRect(&m_rtCanvas);
-	CalcImageRect(&m_dsDisplayDicom.m_DicomImage);
+
+	if (m_pDisplayDicomDS)
+	{
+		CalcImageRect(&m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex));
+	}
 
 	return bRes;
 }
@@ -689,8 +723,8 @@ BOOL CStudyViewer::AllocDisplayImage()
 {
 	BOOL bRes = TRUE;
 
-	INT_PTR nImageSize = m_dsDisplayDicom.m_DicomImage.BytesPerLine((UINT)(m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nWidth*m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nSamplesPerPixel), 8) *
-		m_dsDisplayDicom.m_DicomImage.BytesPerLine((UINT)(m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nHeight*m_dsDisplayDicom.m_DicomImage.m_stImageInfo.m_nSamplesPerPixel), 8);
+	INT_PTR nImageSize = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).BytesPerLine((UINT)(m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nWidth*m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nSamplesPerPixel), 8) *
+		m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).BytesPerLine((UINT)(m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nHeight*m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nSamplesPerPixel), 8);
 
 	if (nImageSize <= 0)
 		return FALSE;

@@ -463,114 +463,66 @@ BOOL CDicomParser::ParseDicomHeader()
 	m_dcmHeaderInfo.m_strSOPClassUID = GetValue(TAG_SOP_CLASS_UID);
 	m_dcmHeaderInfo.m_strTransferSyntaxUID = GetValue(TAG_REFERENCED_TRANSFER_SYNTAX_UID_IN_FILE);
 
-	
+	pElement = FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
+	m_dcmHeaderInfo.m_nFrameCount = GetCountImage(pElement);
 	
 	return TRUE;
-
 }
 
 BOOL CDicomParser::ParseImageInfo()
 {
-	DICOMIMAGE dicomImage;
+	DICOMIMAGE lDicomImage;
 	BITMAPHANDLE BitmapHandle;
 
-	pDICOMELEMENT pElement = FindFirstElement(NULL, TAG_IMAGE_POSITION_PATIENT, FALSE);
-	if (pElement)
-	{
-		L_DOUBLE* pDouble_X = NULL;
-		L_DOUBLE* pDouble_Y = NULL;
-		L_DOUBLE* pDouble_Z = NULL;
-
-		pDouble_X = GetDoubleValue(pElement, 0, 1);
-		pDouble_Y = GetDoubleValue(pElement, 1, 1);
-		pDouble_Z = GetDoubleValue(pElement, 2, 1);
-
-		if (pDouble_X != NULL && pDouble_Y != NULL && pDouble_Z != NULL)
-		{
-			m_DicomImage.m_stImageInfo.m_fImagePosition_X = *pDouble_X;
-			m_DicomImage.m_stImageInfo.m_fImagePosition_Y = *pDouble_Y;
-			m_DicomImage.m_stImageInfo.m_fImagePosition_Z = *pDouble_Z;
-		}
-	}
-
-	pElement = FindFirstElement(NULL, TAG_IMAGE_ORIENTATION_PATIENT, FALSE);
-	if (pElement)
-	{
-		L_DOUBLE* pDouble_RowX = NULL;
-		L_DOUBLE* pDouble_RowY = NULL;
-		L_DOUBLE* pDouble_RowZ = NULL;
-		L_DOUBLE* pDouble_ColX = NULL;
-		L_DOUBLE* pDouble_ColY = NULL;
-		L_DOUBLE* pDouble_ColZ = NULL;
-
-		pDouble_RowX = GetDoubleValue(pElement, 0, 1);
-		pDouble_RowY = GetDoubleValue(pElement, 1, 1);
-		pDouble_RowZ = GetDoubleValue(pElement, 2, 1);
-		pDouble_ColX = GetDoubleValue(pElement, 3, 1);
-		pDouble_ColY = GetDoubleValue(pElement, 4, 1);
-		pDouble_ColZ = GetDoubleValue(pElement, 5, 1);
-
-		if (pDouble_RowX != NULL && pDouble_RowY != NULL && pDouble_RowZ != NULL &&
-			pDouble_ColX != NULL && pDouble_ColY != NULL && pDouble_ColZ != NULL)
-		{
-			m_DicomImage.m_stImageInfo.m_fImageOrientationRowX = *pDouble_RowX;
-			m_DicomImage.m_stImageInfo.m_fImageOrientationRowY = *pDouble_RowY;
-			m_DicomImage.m_stImageInfo.m_fImageOrientationRowZ = *pDouble_RowZ;
-			m_DicomImage.m_stImageInfo.m_fImageOrientationColX = *pDouble_ColX;
-			m_DicomImage.m_stImageInfo.m_fImageOrientationColY = *pDouble_ColY;
-			m_DicomImage.m_stImageInfo.m_fImageOrientationColZ = *pDouble_ColZ;
-			m_DicomImage.m_stImageInfo.m_fImageOrientationOrthogonalX = GetOrientationOrthogonalX();
-			m_DicomImage.m_stImageInfo.m_fImageOrientationOrthogonalY = GetOrientationOrthogonalY();
-			m_DicomImage.m_stImageInfo.m_fImageOrientationOrthogonalZ = GetOrientationOrthogonalZ();
-		}
-	}
+	CDicomImage dicomImage;
+	pDICOMELEMENT pCurPositionElement = NULL;
+	pDICOMELEMENT pCurOrientationElement = NULL;
+	pDICOMELEMENT pElement;
 
 	// Pixel Information
-	m_DicomImage.m_stImageInfo.m_fPixelXSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_PIXEL_SPACING));
-	if (m_DicomImage.m_stImageInfo.m_fPixelXSpacing < 0.0f)
+	dicomImage.m_stImageInfo.m_fPixelXSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_PIXEL_SPACING));
+	if (dicomImage.m_stImageInfo.m_fPixelXSpacing < 0.0f)
 	{
-		m_DicomImage.m_stImageInfo.m_fPixelXSpacing = 0.0f;
+		dicomImage.m_stImageInfo.m_fPixelXSpacing = 0.0f;
 	}
 
-	m_DicomImage.m_stImageInfo.m_fPixelYSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_PIXEL_SPACING));
-	if (m_DicomImage.m_stImageInfo.m_fPixelYSpacing < 0.0f)
+	dicomImage.m_stImageInfo.m_fPixelYSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_PIXEL_SPACING));
+	if (dicomImage.m_stImageInfo.m_fPixelYSpacing < 0.0f)
 	{
-		m_DicomImage.m_stImageInfo.m_fPixelYSpacing = 0.0f;
+		dicomImage.m_stImageInfo.m_fPixelYSpacing = 0.0f;
 	}
 
-	m_DicomImage.m_stImageInfo.m_fImagerXSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_IMAGER_PIXEL_SPACING));
-	if (m_DicomImage.m_stImageInfo.m_fImagerXSpacing < 0.0f)
+	dicomImage.m_stImageInfo.m_fImagerXSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_IMAGER_PIXEL_SPACING));
+	if (dicomImage.m_stImageInfo.m_fImagerXSpacing < 0.0f)
 	{
-		m_DicomImage.m_stImageInfo.m_fImagerXSpacing = 0.0f;
+		dicomImage.m_stImageInfo.m_fImagerXSpacing = 0.0f;
 	}
 
-	m_DicomImage.m_stImageInfo.m_fImagerYSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_IMAGER_PIXEL_SPACING));
-	if (m_DicomImage.m_stImageInfo.m_fImagerYSpacing < 0.0f)
+	dicomImage.m_stImageInfo.m_fImagerYSpacing = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_IMAGER_PIXEL_SPACING));
+	if (dicomImage.m_stImageInfo.m_fImagerYSpacing < 0.0f)
 	{
-		m_DicomImage.m_stImageInfo.m_fImagerYSpacing = 0.0f;
+		dicomImage.m_stImageInfo.m_fImagerYSpacing = 0.0f;
 	}
 
-	m_DicomImage.m_stImageInfo.m_fMagFactor = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_ESTIMATED_RADIOGRAPHIC_MAGNIFICATION_FACTOR));
+	dicomImage.m_stImageInfo.m_fMagFactor = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_ESTIMATED_RADIOGRAPHIC_MAGNIFICATION_FACTOR));
 	//
 
-	pElement = FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
-	m_DicomImage.m_stImageInfo.m_nFrameCount = GetCountImage(pElement);
+
 
 	double dFrameTime = _ttof((LPTSTR)(LPCTSTR)GetValue(TAG_FRAME_TIME));
 	if (dFrameTime)
 	{
-		m_DicomImage.m_stImageInfo.m_nFramePerSecond = (UINT)(((double)1000 / dFrameTime) + 0.05);
+		dicomImage.m_stImageInfo.m_nFramePerSecond = (UINT)(((double)1000 / dFrameTime) + 0.05);
 	}
-	
-	if (GetInfoImage(pElement, &dicomImage, 0) == DICOM_SUCCESS)
-	{
-		//int nWidth, int nHeight, int nBitsPerPixel, int nSamplesPerPixel
-		//dicomImage.nColumns, dicomImage.nRows, dicomImage.nHighBit + 1, dicomImage.nSamplesPerPixel
 
-		INT_PTR nWidth = dicomImage.nColumns;
-		INT_PTR nHeight = dicomImage.nRows;
-		INT_PTR nBitsPerPixel = dicomImage.nHighBit + 1;
-		INT_PTR nSamplesPerPixel = dicomImage.nSamplesPerPixel;
+	pElement = FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
+	
+	if (GetInfoImage(pElement, &lDicomImage, 0) == DICOM_SUCCESS)
+	{
+		INT_PTR nWidth = lDicomImage.nColumns;
+		INT_PTR nHeight = lDicomImage.nRows;
+		INT_PTR nBitsPerPixel = lDicomImage.nHighBit + 1;
+		INT_PTR nSamplesPerPixel = lDicomImage.nSamplesPerPixel;
 
 		if (nWidth <= 0)
 		{
@@ -592,201 +544,282 @@ BOOL CDicomParser::ParseImageInfo()
 			return FALSE;
 		}
 
-		m_DicomImage.m_stImageInfo.m_nBitsPerPixel = nBitsPerPixel;
-		if (m_DicomImage.m_stImageInfo.m_nBitsPerPixel <= 0)
+		dicomImage.m_stImageInfo.m_nBitsPerPixel = nBitsPerPixel;
+		if (dicomImage.m_stImageInfo.m_nBitsPerPixel <= 0)
 		{
-			if (m_DicomImage.m_stImageInfo.m_nBitsPerPixel == 24)
+			if (dicomImage.m_stImageInfo.m_nBitsPerPixel == 24)
 			{
-				m_DicomImage.m_stImageInfo.m_nSamplesPerPixel = 3;
+				dicomImage.m_stImageInfo.m_nSamplesPerPixel = 3;
 			}
-			else if (m_DicomImage.m_stImageInfo.m_nBitsPerPixel > 0 && m_DicomImage.m_stImageInfo.m_nBitsPerPixel < 24)
+			else if (dicomImage.m_stImageInfo.m_nBitsPerPixel > 0 && dicomImage.m_stImageInfo.m_nBitsPerPixel < 24)
 			{
-				m_DicomImage.m_stImageInfo.m_nSamplesPerPixel = 1;
+				dicomImage.m_stImageInfo.m_nSamplesPerPixel = 1;
 			}
 		}
 		else
 		{
-			m_DicomImage.m_stImageInfo.m_nSamplesPerPixel = nSamplesPerPixel;
+			dicomImage.m_stImageInfo.m_nSamplesPerPixel = nSamplesPerPixel;
 		}
-
-
-		UINT nFlags = DICOM_GETIMAGE_AUTO_APPLY_MODALITY_LUT | DICOM_GETIMAGE_AUTO_APPLY_VOI_LUT;
-
-		L_UINT16 nResult = GetImage(pElement,
-			&BitmapHandle,
-			sizeof(BITMAPHANDLE),
-			0,
-			0,
-			ORDER_RGBORGRAY,
-			nFlags,
-			NULL,
-			NULL);
-
-		if (nResult == DICOM_ERROR_MEMORY)
+		
+		for (INT_PTR iFrame = 0; iFrame < m_dcmHeaderInfo.m_nFrameCount; iFrame++)
 		{
-			AfxThrowMemoryException();
-		}
-		else if (nResult != DICOM_SUCCESS)
-		{
-			Sleep(0);
-			nResult = GetImage(pElement,
+			dicomImage.m_stImageInfo.m_nFrameIndex = iFrame;
+
+			pElement = FindFirstElement(NULL, TAG_IMAGE_POSITION_PATIENT, FALSE);
+			if (pElement)
+			{
+				L_DOUBLE* pDouble_X = NULL;
+				L_DOUBLE* pDouble_Y = NULL;
+				L_DOUBLE* pDouble_Z = NULL;
+
+				if (iFrame > 0)
+				{
+					pDICOMELEMENT pTempElement = NULL;
+					pTempElement = FindNextElement(pCurPositionElement, FALSE);
+					if (pTempElement && pTempElement->nTag == TAG_IMAGE_POSITION_PATIENT)
+					{
+						pElement = pTempElement;
+					}
+					pCurPositionElement = pElement;
+				}
+
+				pDouble_X = GetDoubleValue(pElement, 0, 1);
+				pDouble_Y = GetDoubleValue(pElement, 1, 1);
+				pDouble_Z = GetDoubleValue(pElement, 2, 1);
+
+				if (pDouble_X != NULL && pDouble_Y != NULL && pDouble_Z != NULL)
+				{
+					dicomImage.m_stImageInfo.m_fImagePosition_X = *pDouble_X;
+					dicomImage.m_stImageInfo.m_fImagePosition_Y = *pDouble_Y;
+					dicomImage.m_stImageInfo.m_fImagePosition_Z = *pDouble_Z;
+				}
+			}
+
+			pElement = FindFirstElement(NULL, TAG_IMAGE_ORIENTATION_PATIENT, FALSE);
+			if (pElement)
+			{
+				L_DOUBLE* pDouble_RowX = NULL;
+				L_DOUBLE* pDouble_RowY = NULL;
+				L_DOUBLE* pDouble_RowZ = NULL;
+				L_DOUBLE* pDouble_ColX = NULL;
+				L_DOUBLE* pDouble_ColY = NULL;
+				L_DOUBLE* pDouble_ColZ = NULL;
+
+				if (iFrame > 0)
+				{
+					pDICOMELEMENT pTempElement = NULL;
+					pTempElement = FindNextElement(pCurOrientationElement, FALSE);
+					if (pTempElement && pTempElement->nTag == TAG_IMAGE_ORIENTATION_PATIENT)
+					{
+						pElement = pTempElement;
+					}
+					pCurOrientationElement = pElement;
+				}
+
+				pCurOrientationElement = pElement;
+
+				pDouble_RowX = GetDoubleValue(pElement, 0, 1);
+				pDouble_RowY = GetDoubleValue(pElement, 1, 1);
+				pDouble_RowZ = GetDoubleValue(pElement, 2, 1);
+				pDouble_ColX = GetDoubleValue(pElement, 3, 1);
+				pDouble_ColY = GetDoubleValue(pElement, 4, 1);
+				pDouble_ColZ = GetDoubleValue(pElement, 5, 1);
+
+				if (pDouble_RowX != NULL && pDouble_RowY != NULL && pDouble_RowZ != NULL &&
+					pDouble_ColX != NULL && pDouble_ColY != NULL && pDouble_ColZ != NULL)
+				{
+					dicomImage.m_stImageInfo.m_fImageOrientationRowX = *pDouble_RowX;
+					dicomImage.m_stImageInfo.m_fImageOrientationRowY = *pDouble_RowY;
+					dicomImage.m_stImageInfo.m_fImageOrientationRowZ = *pDouble_RowZ;
+					dicomImage.m_stImageInfo.m_fImageOrientationColX = *pDouble_ColX;
+					dicomImage.m_stImageInfo.m_fImageOrientationColY = *pDouble_ColY;
+					dicomImage.m_stImageInfo.m_fImageOrientationColZ = *pDouble_ColZ;
+					dicomImage.m_stImageInfo.m_fImageOrientationOrthogonalX = GetOrientationOrthogonalX(*pDouble_RowY, *pDouble_RowZ, *pDouble_ColY, *pDouble_ColZ);
+					dicomImage.m_stImageInfo.m_fImageOrientationOrthogonalY = GetOrientationOrthogonalY(*pDouble_RowX, *pDouble_RowZ, *pDouble_ColX, *pDouble_ColZ);
+					dicomImage.m_stImageInfo.m_fImageOrientationOrthogonalZ = GetOrientationOrthogonalZ(*pDouble_RowX, *pDouble_RowY, *pDouble_ColX, *pDouble_ColY);
+				}
+			}
+
+			UINT nFlags = DICOM_GETIMAGE_AUTO_APPLY_MODALITY_LUT | DICOM_GETIMAGE_AUTO_APPLY_VOI_LUT;
+			
+			pElement = FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
+			L_UINT16 nResult = GetImage(pElement,
 				&BitmapHandle,
 				sizeof(BITMAPHANDLE),
-				0,
+				iFrame,
 				0,
 				ORDER_RGBORGRAY,
 				nFlags,
 				NULL,
 				NULL);
 
-			if (nResult != DICOM_SUCCESS)
+			if (nResult == DICOM_ERROR_MEMORY)
+			{
+				AfxThrowMemoryException();
+			}
+			else if (nResult != DICOM_SUCCESS)
 			{
 				Sleep(0);
 				nResult = GetImage(pElement,
 					&BitmapHandle,
 					sizeof(BITMAPHANDLE),
-					0,
+					iFrame,
 					0,
 					ORDER_RGBORGRAY,
 					nFlags,
 					NULL,
 					NULL);
-			}
 
-			if (nResult != DICOM_SUCCESS)
-			{
-				AfxThrowUserException();
-			}
+				if (nResult != DICOM_SUCCESS)
+				{
+					Sleep(0);
+					nResult = GetImage(pElement,
+						&BitmapHandle,
+						sizeof(BITMAPHANDLE),
+						iFrame,
+						0,
+						ORDER_RGBORGRAY,
+						nFlags,
+						NULL,
+						NULL);
+				}
 
-			if (BitmapHandle.Flags.Allocated != 1)
-			{
-				AfxThrowUserException();
-			}
-
-			if (BitmapHandle.Flags.Compressed == 1)
-			{
-				AfxThrowUserException();
-			}
-
-			// Not linear image data.
-			if (BitmapHandle.Flags.Tiled == 1)
-			{
-				m_DicomImage.SetTiledPiexlData(TRUE);
-			}
-
-			if (BitmapHandle.Flags.SuperCompressed == 1)
-			{
-				AfxThrowUserException();
-			}
-
-			if (BitmapHandle.Flags.UseLUT == 1)
-			{
-				if (!BitmapHandle.pLUT)
+				if (nResult != DICOM_SUCCESS)
 				{
 					AfxThrowUserException();
 				}
 
-				if (BitmapHandle.LUTLength < 1)
+				if (BitmapHandle.Flags.Allocated != 1)
+				{
+					AfxThrowUserException();
+				}
+
+				if (BitmapHandle.Flags.Compressed == 1)
+				{
+					AfxThrowUserException();
+				}
+
+				// Not linear image data.
+				if (BitmapHandle.Flags.Tiled == 1)
+				{
+					dicomImage.SetTiledPiexlData(TRUE);
+				}
+
+				if (BitmapHandle.Flags.SuperCompressed == 1)
+				{
+					AfxThrowUserException();
+				}
+
+				if (BitmapHandle.Flags.UseLUT == 1)
+				{
+					if (!BitmapHandle.pLUT)
+					{
+						AfxThrowUserException();
+					}
+
+					if (BitmapHandle.LUTLength < 1)
+					{
+						AfxThrowUserException();
+					}
+				}
+
+				if (!BitmapHandle.Addr.Windows.pData)
+				{
+					AfxThrowUserException();
+				}
+
+				if (BitmapHandle.Width < 2)
+				{
+					AfxThrowUserException();
+				}
+
+				if (BitmapHandle.Height < 2)
+				{
+					AfxThrowUserException();
+				}
+
+				if (BitmapHandle.BitsPerPixel < 1)
+				{
+					AfxThrowUserException();
+				}
+
+				if (BitmapHandle.BytesPerLine < 4)
+				{
+					AfxThrowUserException();
+				}
+
+				dicomImage.FreeDicomImage();
+				dicomImage.m_stImageInfo.Init();
+
+				if (BitmapHandle.HighBit < 1)
+				{
+					AfxThrowUserException();
+				}
+				else
+				{
+					dicomImage.m_stImageInfo.m_nBitsPerPixel = (UINT)(BitmapHandle.HighBit + 1);
+				}
+
+				// RGB : SamplesPerPixel = 3
+				if (BitmapHandle.BitsPerPixel == 24)
+				{
+					dicomImage.m_stImageInfo.m_nSamplesPerPixel = 3;
+				}
+				// Gray : SamplesPerPixel = 1 (default)
+				else if (BitmapHandle.BitsPerPixel > 0 && BitmapHandle.BitsPerPixel < 24)
+				{
+					dicomImage.m_stImageInfo.m_nSamplesPerPixel = 1;
+				}
+				else
 				{
 					AfxThrowUserException();
 				}
 			}
 
-			if (!BitmapHandle.Addr.Windows.pData)
-			{
-				AfxThrowUserException();
-			}
+			dicomImage.m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(dicomImage.m_stImageInfo.m_nBitsPerPixel);
+			dicomImage.m_stImageInfo.m_nTotalAllocatedBytes = (UINT)(dicomImage.m_stImageInfo.m_nBytesPerPixel*dicomImage.m_stImageInfo.m_nSamplesPerPixel);
+			dicomImage.m_stImageInfo.m_nWidth = nWidth;
+			dicomImage.m_stImageInfo.m_nHeight = nHeight;
+			int nBytesPerLineX = ((dicomImage.m_stImageInfo.m_nWidth * dicomImage.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+			int nBytesPerLineY = ((dicomImage.m_stImageInfo.m_nHeight * dicomImage.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+			dicomImage.m_stImageInfo.m_nWidth = nBytesPerLineX / dicomImage.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+			dicomImage.m_stImageInfo.m_nHeight = nBytesPerLineY / dicomImage.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+			dicomImage.m_stImageInfo.m_nBytesPerLine = dicomImage.m_stImageInfo.m_nWidth * dicomImage.m_stImageInfo.m_nTotalAllocatedBytes;
 
-			if (BitmapHandle.Width < 2)
+			dicomImage.m_stImageInfo.m_fW1 = 0.0f;
+			dicomImage.m_stImageInfo.m_fW2 = Bits2MaxValue(dicomImage.m_stImageInfo.m_nBitsPerPixel);
+			//
+			// Get W/L
+			L_DOUBLE dWindowCenter = 0;
+			L_DOUBLE dWindowWidth = 0;
+			// Window Center
+			pElement = FindFirstElement(NULL, TAG_WINDOW_CENTER, FALSE);
+			if (pElement && pElement->nLength)
 			{
-				AfxThrowUserException();
-			}
-
-			if (BitmapHandle.Height < 2)
-			{
-				AfxThrowUserException();
-			}
-
-			if (BitmapHandle.BitsPerPixel < 1)
-			{
-				AfxThrowUserException();
-			}
-
-			if (BitmapHandle.BytesPerLine < 4)
-			{
-				AfxThrowUserException();
-			}
-
-			m_DicomImage.FreeDicomImage();
-			m_DicomImage.m_stImageInfo.Init();
-
-			if (BitmapHandle.HighBit < 1)
-			{
-				AfxThrowUserException();
+				dWindowCenter = *GetDoubleValue(pElement, 0, 1);
+				dicomImage.m_stImageInfo.m_nW1 = (int)dWindowCenter;
 			}
 			else
 			{
-				m_DicomImage.m_stImageInfo.m_nBitsPerPixel = (UINT)(BitmapHandle.HighBit + 1);
+				dicomImage.m_stImageInfo.m_nW1 = (int)dicomImage.m_stImageInfo.m_fW1;
 			}
 
-			// RGB : SamplesPerPixel = 3
-			if (BitmapHandle.BitsPerPixel == 24)
+			// Window Width
+			pElement = FindFirstElement(NULL, TAG_WINDOW_WIDTH, FALSE);
+			if (pElement && pElement->nLength)
 			{
-				m_DicomImage.m_stImageInfo.m_nSamplesPerPixel = 3;
-			}
-			// Gray : SamplesPerPixel = 1 (default)
-			else if (BitmapHandle.BitsPerPixel > 0 && BitmapHandle.BitsPerPixel < 24)
-			{
-				m_DicomImage.m_stImageInfo.m_nSamplesPerPixel = 1;
+				dWindowWidth = *GetDoubleValue(pElement, 0, 1);
+				dicomImage.m_stImageInfo.m_nW2 = (int)dWindowWidth;
 			}
 			else
 			{
-				AfxThrowUserException();
+				dicomImage.m_stImageInfo.m_nW2 = (int)dicomImage.m_stImageInfo.m_fW2;
 			}
-		}
+			//
 
-		m_DicomImage.m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(m_DicomImage.m_stImageInfo.m_nBitsPerPixel);
-		m_DicomImage.m_stImageInfo.m_nTotalAllocatedBytes = (UINT)(m_DicomImage.m_stImageInfo.m_nBytesPerPixel*m_DicomImage.m_stImageInfo.m_nSamplesPerPixel);
-		m_DicomImage.m_stImageInfo.m_nWidth = nWidth;
-		m_DicomImage.m_stImageInfo.m_nHeight = nHeight;
-		int nBytesPerLineX = ((m_DicomImage.m_stImageInfo.m_nWidth * m_DicomImage.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
-		int nBytesPerLineY = ((m_DicomImage.m_stImageInfo.m_nHeight * m_DicomImage.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
-		m_DicomImage.m_stImageInfo.m_nWidth = nBytesPerLineX / m_DicomImage.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
-		m_DicomImage.m_stImageInfo.m_nHeight = nBytesPerLineY / m_DicomImage.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
-		m_DicomImage.m_stImageInfo.m_nBytesPerLine = m_DicomImage.m_stImageInfo.m_nWidth * m_DicomImage.m_stImageInfo.m_nTotalAllocatedBytes;
-
-		m_DicomImage.m_stImageInfo.m_fW1 = 0.0f;
-		m_DicomImage.m_stImageInfo.m_fW2 = Bits2MaxValue(m_DicomImage.m_stImageInfo.m_nBitsPerPixel);
-		//
-		// Get W/L
-		L_DOUBLE dWindowCenter = 0;
-		L_DOUBLE dWindowWidth = 0;
-		// Window Center
-		pElement = FindFirstElement(NULL, TAG_WINDOW_CENTER, FALSE);
-		if (pElement && pElement->nLength)
-		{
-			dWindowCenter = *GetDoubleValue(pElement, 0, 1);
-			m_DicomImage.m_stImageInfo.m_nW1 = (int)dWindowCenter;
+			dicomImage.LoadDicomImage(&BitmapHandle);
+			m_aryDicomImage.Add(dicomImage);
 		}
-		else
-		{
-			m_DicomImage.m_stImageInfo.m_nW1 = (int)m_DicomImage.m_stImageInfo.m_fW1;
-		}
-
-		// Window Width
-		pElement = FindFirstElement(NULL, TAG_WINDOW_WIDTH, FALSE);
-		if (pElement && pElement->nLength)
-		{
-			dWindowWidth = *GetDoubleValue(pElement, 0, 1);
-			m_DicomImage.m_stImageInfo.m_nW2 = (int)dWindowWidth;
-		}
-		else
-		{
-			m_DicomImage.m_stImageInfo.m_nW2 = (int)m_DicomImage.m_stImageInfo.m_fW2;
-		}
-		//
-
-		m_DicomImage.LoadDicomImage(&BitmapHandle);
 	}
 	else
 	{
@@ -828,6 +861,7 @@ VOID CDicomParser::SetCurrentElement(pDICOMELEMENT pCurrentElement)
 
 L_VOID CDicomParser::ResetDS()
 {
+	
 	LDicomDS::ResetDS();
 }
 
@@ -952,12 +986,16 @@ int& CDicomParser::GetCurNLS()
 	return m_nCurNLS;
 }
 
-CLLDicomDS CDicomParser::GetLLDicomDS()
+CLLDicomDS CDicomParser::GetLLDicomDS(INT_PTR nFrameIndex)
 {
 	CLLDicomDS dsLLDicomDS;
 
 	dsLLDicomDS.m_dcmHeaderInfo = m_dcmHeaderInfo;
-	dsLLDicomDS.m_DicomImage = m_DicomImage;
+	dsLLDicomDS.m_aryDicomImage.RemoveAll();
+	for (INT_PTR iFrame = 0; iFrame < m_dcmHeaderInfo.m_nFrameCount; iFrame++)
+	{
+		dsLLDicomDS.m_aryDicomImage.Add(m_aryDicomImage.GetAt(iFrame));
+	}
 
 	return dsLLDicomDS;
 }
@@ -965,37 +1003,42 @@ CLLDicomDS CDicomParser::GetLLDicomDS()
 CDicomParser& CDicomParser::operator=(const CDicomParser& obj)
 {
 	m_dcmHeaderInfo = obj.m_dcmHeaderInfo;
-	m_DicomImage = obj.m_DicomImage;
+
+	m_aryDicomImage.RemoveAll();
+	for (INT_PTR iFrame = 0; iFrame < obj.m_aryDicomImage.GetCount(); iFrame++)
+	{
+		m_aryDicomImage.Add(obj.m_aryDicomImage.GetAt(iFrame));
+	}
 
 	return *this;
 }
 
-FLOAT CDicomParser::GetOrientationOrthogonalX()
+FLOAT CDicomParser::GetOrientationOrthogonalX(INT_PTR nRowY, INT_PTR nRowZ, INT_PTR nColY, INT_PTR nColZ, INT_PTR nFrameIndex)
 {
-	FLOAT fRowY = m_DicomImage.m_stImageInfo.m_fImageOrientationRowY;
-	FLOAT fRowZ = m_DicomImage.m_stImageInfo.m_fImageOrientationRowZ;
-	FLOAT fColY = m_DicomImage.m_stImageInfo.m_fImageOrientationColY;
-	FLOAT fColZ = m_DicomImage.m_stImageInfo.m_fImageOrientationColZ;
+	FLOAT fRowY = nRowY;
+	FLOAT fRowZ = nRowZ;
+	FLOAT fColY = nColY;
+	FLOAT fColZ = nColZ;
 
 	return (fRowY * fColZ) - (fRowZ * fColY);
 }
 
-FLOAT CDicomParser::GetOrientationOrthogonalY()
+FLOAT CDicomParser::GetOrientationOrthogonalY(INT_PTR nRowX, INT_PTR nRowZ, INT_PTR nColX, INT_PTR nColZ, INT_PTR nFrameIndex)
 {
-	FLOAT fRowX = m_DicomImage.m_stImageInfo.m_fImageOrientationRowX;
-	FLOAT fRowZ = m_DicomImage.m_stImageInfo.m_fImageOrientationRowZ;
-	FLOAT fColX = m_DicomImage.m_stImageInfo.m_fImageOrientationColX;
-	FLOAT fColZ = m_DicomImage.m_stImageInfo.m_fImageOrientationColZ;
+	FLOAT fRowX = nRowX;
+	FLOAT fRowZ = nRowZ;
+	FLOAT fColX = nColX;
+	FLOAT fColZ = nColZ;
 
 	return (fRowX * fColZ) - (fRowZ * fColZ);
 }
 
-FLOAT CDicomParser::GetOrientationOrthogonalZ()
+FLOAT CDicomParser::GetOrientationOrthogonalZ(INT_PTR nRowX, INT_PTR nRowY, INT_PTR nColX, INT_PTR nColY, INT_PTR nFrameIndex)
 {
-	FLOAT fRowX = m_DicomImage.m_stImageInfo.m_fImageOrientationRowX;
-	FLOAT fRowY = m_DicomImage.m_stImageInfo.m_fImageOrientationRowY;
-	FLOAT fColX = m_DicomImage.m_stImageInfo.m_fImageOrientationColX;
-	FLOAT fColY = m_DicomImage.m_stImageInfo.m_fImageOrientationColY;
+	FLOAT fRowX = nRowX;
+	FLOAT fRowY = nRowY;
+	FLOAT fColX = nColX;
+	FLOAT fColY = nColY;
 
 	return (fRowX * fColX) - (fRowY * fColY);
 }

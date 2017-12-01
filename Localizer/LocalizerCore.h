@@ -102,7 +102,7 @@ public:
 	void CalcReferenceLine();
 
 private:
-	LOCALIZER_IMAGE_INFO_ GetLocalizerImageInfo(CLLDicomDS* dsSrcDicomDS);
+	LOCALIZER_IMAGE_INFO_ GetLocalizerImageInfo(CLLDicomDS* dsSrcDicomDS, INT_PTR nFrameIndex);
 	void RotateBasedOnDestOrientation(LOCALIZER_IMAGE_INFO_ stDestLocalizerImageInfo,	FLOAT fSrcPosX, FLOAT fSrcPosY, FLOAT fSrcPosZ,	FLOAT &fDestPosX, FLOAT &fDestPosY, FLOAT &fDestPosZ);
 	BOOL IsSamePatientOrientation(LOCALIZER_IMAGE_INFO_ stSrcLocalizerImageInfo, LOCALIZER_IMAGE_INFO_ stDestLocalizerImageInfo);
 };

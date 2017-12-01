@@ -392,6 +392,8 @@ void CMainFrame::ParseDicomFile(CStringArray* aryDicomFilePath)
 			CLLDicomDS dsLLDicomds = dicomParser.GetLLDicomDS();
 
 			AddDicomDS(dsLLDicomds);
+
+			dicomParser.m_aryDicomImage.RemoveAll();
 		}
 	}
 
