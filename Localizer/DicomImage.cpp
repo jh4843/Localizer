@@ -210,15 +210,18 @@ BOOL CDicomImage::GetTiledPiexlData()
 void CDicomImage::operator=(const CDicomImage& obj)
 {
 	m_stImageInfo = obj.m_stImageInfo;
-//	m_pImageData = obj.m_pImageData;
 
 	FreeDicomImage();
+
+	if (!obj.m_pImageData)
+		return;
+
 	int nPixelDataSize = GetImageSize();
 	m_pImageData = (BYTE*)::VirtualAlloc(NULL, nPixelDataSize, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
 
 	if (!m_pImageData)
 	{
-		AfxThrowMemoryException();
+		FreeDicomImage();
 		return;
 	}
 

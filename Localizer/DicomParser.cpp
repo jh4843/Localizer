@@ -85,6 +85,16 @@ CString CDicomParser::GetInstanceID()
 	return m_dcmHeaderInfo.m_strSOPInstanceUID;
 }
 
+void CDicomParser::SetDcmHeaderInfo(CLLDicomDS::DICOM_HEADER_INFO_ dsHeaderInfo)
+{
+	m_dcmHeaderInfo = dsHeaderInfo;
+}
+
+void CDicomParser::AddDcmImageInfo(CDicomImage dsImageInfo)
+{
+	m_aryDicomImage.Add(dsImageInfo);
+}
+
 CString CDicomParser::GetValue(UINT uTag, int nOffset)
 {
 	L_INT32 nIndex = 0;
@@ -817,7 +827,7 @@ BOOL CDicomParser::ParseImageInfo()
 			}
 			//
 
-			dicomImage.LoadDicomImage(&BitmapHandle);
+			//dicomImage.LoadDicomImage(&BitmapHandle);
 			m_aryDicomImage.Add(dicomImage);
 		}
 	}

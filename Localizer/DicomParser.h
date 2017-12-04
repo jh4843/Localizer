@@ -32,6 +32,7 @@ public:
 	//
 	L_UINT16 LoadDS(L_TCHAR *pszName, L_UINT16 nFlags);
 
+	// GET
 	CString GetValue(UINT uTag = 0, int nOffset = 1);
 	CString GetValue(pDICOMELEMENT pElement, int nOffset = 1);
 	CString GetValue(UINT uTag, int nOffset, pDICOMELEMENT pCurElement);
@@ -39,6 +40,10 @@ public:
 	CString GetStudyID();
 	CString GetSeriesID();
 	CString GetInstanceID();
+
+	//SET
+	void SetDcmHeaderInfo(CLLDicomDS::DICOM_HEADER_INFO_ dsHeaderInfo);
+	void AddDcmImageInfo(CDicomImage dsImageInfo);
 
 	//
 	BOOL ParseDicomHeader();

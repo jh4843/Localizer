@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "StudyViewer.h"
 #include "CoordinatorUtill.h"
+#include "DicomParser.h"
 
 CStudyViewer::CStudyViewer(INT_PTR nLayoutIndex)
 {
@@ -75,6 +76,7 @@ void CStudyViewer::SetDisplayInstance()
 	AllocDisplayImage();
 
 	CDicomImage InPutImageDS = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
+	LoadImageFromDcm(InPutImageDS);
 	InPutImageDS.GetImageProcessedImage(m_pDisplayImage, &imageDisplayInfo);
 }
 
@@ -137,6 +139,202 @@ void CStudyViewer::RedrawWnd()
 {
 	Invalidate(FALSE);
 	UpdateWindow();
+}
+
+void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
+{
+	CDicomParser* pDicomParser = new CDicomParser;
+
+	pDicomParser->LoadDS((LPTSTR)(LPCTSTR)m_pDisplayDicomDS->m_dcmHeaderInfo.m_strFileName, 0);
+	pDicomParser->SetDcmHeaderInfo(m_pDisplayDicomDS->m_dcmHeaderInfo);
+	pDicomParser->AddDcmImageInfo(m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex));
+
+	BITMAPHANDLE BitmapHandle;
+	pDICOMELEMENT pElement;
+	imageDicom = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
+
+	UINT nFlags = DICOM_GETIMAGE_AUTO_APPLY_MODALITY_LUT | DICOM_GETIMAGE_AUTO_APPLY_VOI_LUT;
+
+	pElement = pDicomParser->FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
+	L_UINT16 nResult = pDicomParser->GetImage(pElement,
+		&BitmapHandle,
+		sizeof(BITMAPHANDLE),
+		m_nCurFrameIndex,
+		0,
+		ORDER_RGBORGRAY,
+		nFlags,
+		NULL,
+		NULL);
+
+	if (nResult == DICOM_ERROR_MEMORY)
+	{
+		AfxThrowMemoryException();
+	}
+	else if (nResult != DICOM_SUCCESS)
+	{
+		Sleep(0);
+		nResult = pDicomParser->GetImage(pElement,
+			&BitmapHandle,
+			sizeof(BITMAPHANDLE),
+			m_nCurFrameIndex,
+			0,
+			ORDER_RGBORGRAY,
+			nFlags,
+			NULL,
+			NULL);
+
+		if (nResult != DICOM_SUCCESS)
+		{
+			Sleep(0);
+			nResult = pDicomParser->GetImage(pElement,
+				&BitmapHandle,
+				sizeof(BITMAPHANDLE),
+				m_nCurFrameIndex,
+				0,
+				ORDER_RGBORGRAY,
+				nFlags,
+				NULL,
+				NULL);
+		}
+
+		if (nResult != DICOM_SUCCESS)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.Flags.Allocated != 1)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.Flags.Compressed == 1)
+		{
+			AfxThrowUserException();
+		}
+
+		// Not linear image data.
+		if (BitmapHandle.Flags.Tiled == 1)
+		{
+			imageDicom.SetTiledPiexlData(TRUE);
+		}
+
+		if (BitmapHandle.Flags.SuperCompressed == 1)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.Flags.UseLUT == 1)
+		{
+			if (!BitmapHandle.pLUT)
+			{
+				AfxThrowUserException();
+			}
+
+			if (BitmapHandle.LUTLength < 1)
+			{
+				AfxThrowUserException();
+			}
+		}
+
+		if (!BitmapHandle.Addr.Windows.pData)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.Width < 2)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.Height < 2)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.BitsPerPixel < 1)
+		{
+			AfxThrowUserException();
+		}
+
+		if (BitmapHandle.BytesPerLine < 4)
+		{
+			AfxThrowUserException();
+		}
+
+		imageDicom.FreeDicomImage();
+		imageDicom.m_stImageInfo.Init();
+
+		if (BitmapHandle.HighBit < 1)
+		{
+			AfxThrowUserException();
+		}
+		else
+		{
+			imageDicom.m_stImageInfo.m_nBitsPerPixel = (UINT)(BitmapHandle.HighBit + 1);
+		}
+
+		// RGB : SamplesPerPixel = 3
+		if (BitmapHandle.BitsPerPixel == 24)
+		{
+			imageDicom.m_stImageInfo.m_nSamplesPerPixel = 3;
+		}
+		// Gray : SamplesPerPixel = 1 (default)
+		else if (BitmapHandle.BitsPerPixel > 0 && BitmapHandle.BitsPerPixel < 24)
+		{
+			imageDicom.m_stImageInfo.m_nSamplesPerPixel = 1;
+		}
+		else
+		{
+			AfxThrowUserException();
+		}
+	}
+
+	imageDicom.m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(imageDicom.m_stImageInfo.m_nBitsPerPixel);
+	imageDicom.m_stImageInfo.m_nTotalAllocatedBytes = (UINT)(imageDicom.m_stImageInfo.m_nBytesPerPixel*imageDicom.m_stImageInfo.m_nSamplesPerPixel);
+	imageDicom.m_stImageInfo.m_nWidth = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nWidth;
+	imageDicom.m_stImageInfo.m_nHeight = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nHeight;
+	int nBytesPerLineX = ((imageDicom.m_stImageInfo.m_nWidth * imageDicom.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+	int nBytesPerLineY = ((imageDicom.m_stImageInfo.m_nHeight * imageDicom.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+	imageDicom.m_stImageInfo.m_nWidth = nBytesPerLineX / imageDicom.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+	imageDicom.m_stImageInfo.m_nHeight = nBytesPerLineY / imageDicom.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+	imageDicom.m_stImageInfo.m_nBytesPerLine = imageDicom.m_stImageInfo.m_nWidth * imageDicom.m_stImageInfo.m_nTotalAllocatedBytes;
+
+	imageDicom.m_stImageInfo.m_fW1 = 0.0f;
+	imageDicom.m_stImageInfo.m_fW2 = Bits2MaxValue(imageDicom.m_stImageInfo.m_nBitsPerPixel);
+	//
+	// Get W/L
+	L_DOUBLE dWindowCenter = 0;
+	L_DOUBLE dWindowWidth = 0;
+	// Window Center
+	pElement = pDicomParser->FindFirstElement(NULL, TAG_WINDOW_CENTER, FALSE);
+	if (pElement && pElement->nLength)
+	{
+		dWindowCenter = *(pDicomParser->GetDoubleValue(pElement, 0, 1));
+		imageDicom.m_stImageInfo.m_nW1 = (int)dWindowCenter;
+	}
+	else
+	{
+		imageDicom.m_stImageInfo.m_nW1 = (int)imageDicom.m_stImageInfo.m_fW1;
+	}
+
+	// Window Width
+	pElement = pDicomParser->FindFirstElement(NULL, TAG_WINDOW_WIDTH, FALSE);
+	if (pElement && pElement->nLength)
+	{
+		dWindowWidth = *(pDicomParser->GetDoubleValue(pElement, 0, 1));
+		imageDicom.m_stImageInfo.m_nW2 = (int)dWindowWidth;
+	}
+	else
+	{
+		imageDicom.m_stImageInfo.m_nW2 = (int)imageDicom.m_stImageInfo.m_fW2;
+	}
+	//
+
+	imageDicom.LoadDicomImage(&BitmapHandle);
+	
+	L_FreeBitmap(&BitmapHandle);
+
+	pDicomParser->ResetDS();
 }
 
 void CStudyViewer::ClearLocalizerPoints()
@@ -466,11 +664,13 @@ void CStudyViewer::ChangeSeriesIndex(BOOL bIsIncrease)
 		{
 			m_nCurSeriesIndex = 0;
 			m_nCurInstanceIndex = 0;
+			m_nCurFrameIndex = 0;
 		}
 		else
 		{
 			m_nCurSeriesIndex++;
 			m_nCurInstanceIndex = 0;
+			m_nCurFrameIndex = 0;
 		}
 	}
 	else
@@ -479,11 +679,13 @@ void CStudyViewer::ChangeSeriesIndex(BOOL bIsIncrease)
 		{
 			m_nCurSeriesIndex = nLastIndex;
 			m_nCurInstanceIndex = 0;
+			m_nCurFrameIndex = 0;
 		}
 		else
 		{
 			m_nCurSeriesIndex--;
 			m_nCurInstanceIndex = 0;
+			m_nCurFrameIndex = 0;
 		}
 	}
 }

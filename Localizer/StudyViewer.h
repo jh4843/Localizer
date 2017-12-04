@@ -98,6 +98,9 @@ public:
 	CLLDicomDS* GetDisplayingDicomDS();
 	void RedrawWnd();
 
+	// Load
+	void LoadImageFromDcm(CDicomImage& imageDicom);
+
 	// Clear
 	void ClearLocalizerPoints();
 

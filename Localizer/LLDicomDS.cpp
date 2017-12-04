@@ -29,6 +29,11 @@ CLLDicomDS::~CLLDicomDS()
 void CLLDicomDS::Init()
 {
 	m_dcmHeaderInfo.Init();
+
+	for(INT_PTR i = 0 ; i<m_aryDicomImage.GetCount(); i++)
+	{
+		m_aryDicomImage.GetAt(i).FreeDicomImage();
+	}
 	m_aryDicomImage.RemoveAll();
 }
 
