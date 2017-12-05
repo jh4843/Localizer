@@ -650,6 +650,15 @@ BOOL CDicomParser::ParseImageInfo()
 				}
 			}
 
+			if (dicomImage.m_stImageInfo.m_fImageOrientationOrthogonalX == 0 &&
+				dicomImage.m_stImageInfo.m_fImageOrientationOrthogonalY == 0 &&
+				dicomImage.m_stImageInfo.m_fImageOrientationOrthogonalZ == 0)
+			{
+				CString strMsg;
+				strMsg.Format(_T("Strange Value"));
+				AfxMessageBox(strMsg);
+			}
+
 			UINT nFlags = DICOM_GETIMAGE_AUTO_APPLY_MODALITY_LUT | DICOM_GETIMAGE_AUTO_APPLY_VOI_LUT;
 			
 			pElement = FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
@@ -1023,32 +1032,32 @@ CDicomParser& CDicomParser::operator=(const CDicomParser& obj)
 	return *this;
 }
 
-FLOAT CDicomParser::GetOrientationOrthogonalX(INT_PTR nRowY, INT_PTR nRowZ, INT_PTR nColY, INT_PTR nColZ, INT_PTR nFrameIndex)
+FLOAT CDicomParser::GetOrientationOrthogonalX(double dRowY, double dRowZ, double dColY, double dColZ, INT_PTR nFrameIndex)
 {
-	FLOAT fRowY = nRowY;
-	FLOAT fRowZ = nRowZ;
-	FLOAT fColY = nColY;
-	FLOAT fColZ = nColZ;
+	FLOAT fRowY = dRowY;
+	FLOAT fRowZ = dRowZ;
+	FLOAT fColY = dColY;
+	FLOAT fColZ = dColZ;
 
 	return (fRowY * fColZ) - (fRowZ * fColY);
 }
 
-FLOAT CDicomParser::GetOrientationOrthogonalY(INT_PTR nRowX, INT_PTR nRowZ, INT_PTR nColX, INT_PTR nColZ, INT_PTR nFrameIndex)
+FLOAT CDicomParser::GetOrientationOrthogonalY(double dRowX, double dRowZ, double dColX, double dColZ, INT_PTR nFrameIndex)
 {
-	FLOAT fRowX = nRowX;
-	FLOAT fRowZ = nRowZ;
-	FLOAT fColX = nColX;
-	FLOAT fColZ = nColZ;
+	FLOAT fRowX = dRowX;
+	FLOAT fRowZ = dRowZ;
+	FLOAT fColX = dColX;
+	FLOAT fColZ = dColZ;
 
-	return (fRowX * fColZ) - (fRowZ * fColZ);
+	return (fRowZ * fColX) - (fRowX * fColZ);
 }
 
-FLOAT CDicomParser::GetOrientationOrthogonalZ(INT_PTR nRowX, INT_PTR nRowY, INT_PTR nColX, INT_PTR nColY, INT_PTR nFrameIndex)
+FLOAT CDicomParser::GetOrientationOrthogonalZ(double dRowX, double dRowY, double dColX, double dColY, INT_PTR nFrameIndex)
 {
-	FLOAT fRowX = nRowX;
-	FLOAT fRowY = nRowY;
-	FLOAT fColX = nColX;
-	FLOAT fColY = nColY;
+	FLOAT fRowX = dRowX;
+	FLOAT fRowY = dRowY;
+	FLOAT fColX = dColX;
+	FLOAT fColY = dColY;
 
-	return (fRowX * fColX) - (fRowY * fColY);
+	return (fRowX * fColY) - (fRowY * fColX);
 }

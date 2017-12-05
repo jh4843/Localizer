@@ -61,8 +61,8 @@ public:
 	CDicomParser& operator=(const CDicomParser& obj);
 
 private:
-	FLOAT GetOrientationOrthogonalX(INT_PTR nRowY, INT_PTR nRowZ, INT_PTR nColY, INT_PTR nColZ, INT_PTR nFrameIndex = 0);
-	FLOAT GetOrientationOrthogonalY(INT_PTR nRowX, INT_PTR nRowZ, INT_PTR nColX, INT_PTR nColZ, INT_PTR nFrameIndex = 0);
-	FLOAT GetOrientationOrthogonalZ(INT_PTR nRowX, INT_PTR nRowY, INT_PTR nColX, INT_PTR nColY, INT_PTR nFrameIndex = 0);
+	FLOAT GetOrientationOrthogonalX(double dRowY, double dRowZ, double dColY, double dColZ, INT_PTR nFrameIndex = 0);
+	FLOAT GetOrientationOrthogonalY(double dRowX, double dRowZ, double dColX, double dColZ, INT_PTR nFrameIndex = 0);
+	FLOAT GetOrientationOrthogonalZ(double dRowX, double dRowY, double dColX, double dColY, INT_PTR nFrameIndex = 0);
 };
 

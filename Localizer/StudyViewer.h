@@ -59,7 +59,8 @@ protected:
 	COleDataSourceEx* m_pDragSource;
 	COleDropTargetEx* m_pDropTarget;
 
-	CArray<Gdiplus::PointF, Gdiplus::PointF> m_aryLocalizerPointF;
+	Gdiplus::PointF m_ptLocalizerStart;
+	Gdiplus::PointF m_ptLocalizerEnd;
 
 	DIBINFO m_DibInfo;
 
@@ -84,8 +85,7 @@ public:
 	void SetViewOnlySameSeries();
 	void SetViewAllSeries();
 	void SetCurrentInstanceIndex(INT_PTR nInstanceIndex);
-	//
-	void AddLocalizerPoints(Gdiplus::PointF ptLocalizerPointF);
+	void SetLocalizerPoints(Gdiplus::PointF ptLocalizerStart, Gdiplus::PointF ptLocalizerEnd);
 
 	// Get
 	INT_PTR GetLayoutIndex();

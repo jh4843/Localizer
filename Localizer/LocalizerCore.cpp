@@ -127,10 +127,16 @@ void CLocalizerCore::CalcReferenceLine()
 
 	FLOAT fSrcXPosInDestImage_Pixel[4];	// [0] : TLHC(Top Left Hand Corner), [1]: TRHC(Top Right Hand), [2] : BRHC(Bottom Right Hand), [3] : BLHC(Bottom Left Hand)
 	FLOAT fSrcYPosInDestImage_Pixel[4];	// [0] : TLHC(Top Left Hand Corner), [1]: TRHC(Top Right Hand), [2] : BRHC(Bottom Right Hand), [3] : BLHC(Bottom Left Hand)
+	FLOAT fSrcZPosInDestImage_Pixel[4];	// [0] : TLHC(Top Left Hand Corner), [1]: TRHC(Top Right Hand), [2] : BRHC(Bottom Right Hand), [3] : BLHC(Bottom Left Hand)
 
 	FLOAT fSrcPosX[4] = { 0.0, };
 	FLOAT fSrcPosY[4] = { 0.0, };
 	FLOAT fSrcPosZ[4] = { 0.0, };
+
+	CArray<POINT_3D_, POINT_3D_> ary_3D_Point;
+	CLocalizerCore::POINT_3D_ addedPoint;
+	Gdiplus::PointF ptStart;
+	Gdiplus::PointF ptEnd;
 
 	FLOAT fSrcPosXBasedOnDest;
 	FLOAT fSrcPosYBasedOnDest;
@@ -152,6 +158,8 @@ void CLocalizerCore::CalcReferenceLine()
 		if (pSrcStudyViewer->GetStudy()->IsSameStudyID(pStudyViewer->GetStudy()->GetStudyId()) == FALSE)
 			continue;
 
+		addedPoint.Init();
+		ary_3D_Point.RemoveAll();
 		pStudyViewer->ClearLocalizerPoints();
 		dsDestDicomDS = pStudyViewer->GetDisplayingDicomDS();
 		stDestLocalizerImageInfo = GetLocalizerImageInfo(dsDestDicomDS, pStudyViewer->GetCurrentFrameIndex());
@@ -182,9 +190,18 @@ void CLocalizerCore::CalcReferenceLine()
 
 			fSrcXPosInDestImage_Pixel[iRect] = INT_PTR(fSrcPosXBasedOnDest / stDestLocalizerImageInfo.m_fPixelXSpacing + 0.5);
 			fSrcYPosInDestImage_Pixel[iRect] = INT_PTR(fSrcPosYBasedOnDest / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
+			fSrcZPosInDestImage_Pixel[iRect] = INT_PTR(fSrcPosZBasedOnDest / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
+			
+			addedPoint.Set(fSrcXPosInDestImage_Pixel[iRect], fSrcYPosInDestImage_Pixel[iRect], fSrcZPosInDestImage_Pixel[iRect]);
 
-			pStudyViewer->AddLocalizerPoints(Gdiplus::PointF(fSrcXPosInDestImage_Pixel[iRect], fSrcYPosInDestImage_Pixel[iRect]));
+			ary_3D_Point.Add(addedPoint);
 		}
+
+		ptStart = Gdiplus::PointF(0.0, 0.0);
+		ptEnd = Gdiplus::PointF(0.0, 0.0);
+		CalcContactZSurface(&ary_3D_Point, ptStart, ptEnd);
+
+		pStudyViewer->SetLocalizerPoints(ptStart, ptEnd);
 	}
 }
 
@@ -226,4 +243,194 @@ BOOL CLocalizerCore::IsSamePatientOrientation(LOCALIZER_IMAGE_INFO_ stSrcLocaliz
 		return FALSE;
 
 	return TRUE;
+}
+
+BOOL CLocalizerCore::CalcContactZSurface(CArray<CLocalizerCore::POINT_3D_, CLocalizerCore::POINT_3D_> *ary3DPoint, Gdiplus::PointF &ptStart, Gdiplus::PointF &ptEnd)
+{
+	BOOL bRes = FALSE;
+
+	if (ary3DPoint->GetCount() < 4)
+		return FALSE;
+
+	CLocalizerCore::POINT_3D_ aryUpperPoint[4];
+	CLocalizerCore::POINT_3D_ aryLowerPoint[4];
+	INT_PTR arySetIndex[4] = { 0,0,0,0 };
+
+	INT_PTR nUpperPointCount = 0;
+	INT_PTR nLowerPointCount = 0;
+
+	if (ary3DPoint->GetAt(0).fZ >= 0)
+	{
+		aryUpperPoint[nUpperPointCount++] = ary3DPoint->GetAt(0);
+	}
+	else
+	{
+		aryLowerPoint[nLowerPointCount++] = ary3DPoint->GetAt(0);
+	}
+
+	if (ary3DPoint->GetAt(1).fZ >= 0)
+	{
+		aryUpperPoint[nUpperPointCount++] = ary3DPoint->GetAt(1);
+	}
+	else
+	{
+		aryLowerPoint[nLowerPointCount++] = ary3DPoint->GetAt(1);
+	}
+
+	if (ary3DPoint->GetAt(2).fZ >= 0)
+	{
+		aryUpperPoint[nUpperPointCount++] = ary3DPoint->GetAt(2);
+	}
+	else
+	{
+		aryLowerPoint[nLowerPointCount++] = ary3DPoint->GetAt(2);
+	}
+
+	if (ary3DPoint->GetAt(3).fZ >= 0)
+	{
+		aryUpperPoint[nUpperPointCount++] = ary3DPoint->GetAt(3);
+	}
+	else
+	{
+		aryLowerPoint[nLowerPointCount++] = ary3DPoint->GetAt(3);
+	}
+
+	if (nUpperPointCount >= 4)
+		return FALSE;
+
+	if (nLowerPointCount >= 4)
+		return FALSE;
+
+
+	double distPoints;
+
+
+	for (INT_PTR iUpper = 0; iUpper < nUpperPointCount; iUpper++)
+	{
+		distPoints = -1;
+		for (INT_PTR iLower = 0; iLower < nLowerPointCount; iLower++)
+		{
+			double tempDist = CalcDistance(aryUpperPoint[iUpper], aryLowerPoint[iLower]);
+
+			if (distPoints == -1 || tempDist < distPoints)
+			{
+				arySetIndex[iUpper] = iLower;
+				distPoints = tempDist;
+			}
+		}
+	}
+
+	CLocalizerCore::POINT_3D_ ptFirstLineStart;
+	CLocalizerCore::POINT_3D_ ptFirstLineEnd;
+	CLocalizerCore::POINT_3D_ ptSecLineStart;
+	CLocalizerCore::POINT_3D_ ptSecLineEnd;
+
+	CLocalizerCore::POINT_3D_ ptResultStart;
+	CLocalizerCore::POINT_3D_ ptResultEnd;
+
+	INT_PTR nLongestIndex = 0;
+	INT_PTR nLongestDistance = 0;
+
+	double dTempDist;
+
+	switch (nUpperPointCount)
+	{
+	case 1:
+		ptFirstLineStart = aryUpperPoint[0];
+		ptSecLineStart = aryUpperPoint[0];
+
+		ptFirstLineEnd = aryLowerPoint[0];
+		ptSecLineEnd = aryLowerPoint[1];
+
+		for (INT_PTR iDist = 0; iDist < nLowerPointCount; iDist++)
+		{
+			dTempDist = CalcDistance(ptSecLineStart, aryLowerPoint[iDist]);
+			if (dTempDist > nLongestDistance)
+			{
+				nLongestDistance = dTempDist;
+				nLongestIndex = iDist;
+			}
+		}
+
+		if (nLongestIndex == 0)
+		{
+			ptFirstLineEnd = aryLowerPoint[2];
+		}
+		else if (nLongestIndex == 1)
+		{
+			ptSecLineEnd = aryLowerPoint[2];
+		}
+		break;
+	case 2:
+		ptFirstLineStart = aryUpperPoint[0];
+		ptSecLineStart = aryUpperPoint[1];
+
+		ptFirstLineEnd = aryLowerPoint[arySetIndex[0]];
+		ptSecLineEnd = aryLowerPoint[arySetIndex[1]];
+		break;
+	case 3:
+		ptFirstLineStart = aryLowerPoint[0];
+		ptSecLineStart = aryLowerPoint[0];
+
+		ptFirstLineEnd = aryUpperPoint[0];
+		ptSecLineEnd = aryUpperPoint[1];
+
+		
+		for (INT_PTR iDist = 0; iDist < nLowerPointCount; iDist++)
+		{
+			dTempDist = CalcDistance(ptSecLineStart, aryLowerPoint[iDist]);
+			if (dTempDist > nLongestDistance)
+			{
+				nLongestDistance = dTempDist;
+				nLongestIndex = iDist;
+			}
+		}
+
+		if (nLongestIndex == 0)
+		{
+			ptFirstLineEnd = aryUpperPoint[2];
+		}
+		else if (nLongestIndex == 1)
+		{
+			ptSecLineEnd = aryUpperPoint[2];
+		}
+		break;
+	default:
+		CString Msg;
+		Msg.Format(_T("[LocalizerCore] This(%d) Upper point count is abnormal "), nUpperPointCount);
+		AfxMessageBox(Msg);
+		return FALSE;
+	}
+
+	ptResultStart = GetInterSectionWithZ0(ptFirstLineStart, ptFirstLineEnd);
+	ptResultEnd = GetInterSectionWithZ0(ptSecLineStart, ptSecLineEnd);
+	
+	ptStart.X = ptResultStart.fX;
+	ptStart.Y = ptResultStart.fY;
+	ptEnd.X = ptResultEnd.fX;
+	ptEnd.Y = ptResultEnd.fY;
+
+	return TRUE;
+}
+
+double CLocalizerCore::CalcDistance(CLocalizerCore::POINT_3D_ ptSrc, CLocalizerCore::POINT_3D_ ptDest)
+{
+	double dX = ptSrc.fX - ptDest.fX;
+	double dY = ptSrc.fY - ptDest.fY;
+	double dZ = ptSrc.fZ - ptDest.fZ;
+
+	return sqrt(dX*dX + dY*dY + dZ*dZ);
+}
+
+CLocalizerCore::POINT_3D_ CLocalizerCore::GetInterSectionWithZ0(CLocalizerCore::POINT_3D_ ptStart, CLocalizerCore::POINT_3D_ ptEnd)
+{
+	CLocalizerCore::POINT_3D_ ptRes;
+
+	double r = -ptStart.fZ / ptEnd.fZ;
+	
+	ptRes.fX = (r*ptEnd.fX + ptStart.fX) / (r + 1);
+	ptRes.fY = (r*ptEnd.fY + ptStart.fY) / (r + 1);
+	ptRes.fZ = 0.0;
+
+	return ptRes;
 }

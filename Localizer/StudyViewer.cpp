@@ -97,12 +97,10 @@ void CStudyViewer::SetCurrentInstanceIndex(INT_PTR nInstanceIndex)
 
 }
 
-void CStudyViewer::AddLocalizerPoints(Gdiplus::PointF ptLocalizerPointF)
+void CStudyViewer::SetLocalizerPoints(Gdiplus::PointF ptLocalizerStart, Gdiplus::PointF ptLocalizerEnd)
 {
-	if (m_aryLocalizerPointF.GetCount() > MAX_LOCALIZER_POINT_COUNT)
-		return;
-
-	m_aryLocalizerPointF.Add(ptLocalizerPointF);
+	m_ptLocalizerStart = ptLocalizerStart;
+	m_ptLocalizerEnd = ptLocalizerEnd;
 }
 
 INT_PTR CStudyViewer::GetLayoutIndex()
@@ -339,7 +337,9 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 
 void CStudyViewer::ClearLocalizerPoints()
 {
-	m_aryLocalizerPointF.RemoveAll();
+	m_ptLocalizerStart = Gdiplus::PointF(0.0, 0.0);
+	m_ptLocalizerEnd = Gdiplus::PointF(0.0, 0.0);
+
 	return;
 }
 
@@ -381,7 +381,7 @@ void CStudyViewer::Init(INT_PTR nCurSeriesIndex, INT_PTR nCurInstanceIndex, INT_
 	m_rtCanvas = CRect(0, 0, 0, 0);
 	m_rtImage = CRect(0, 0, 0, 0);
 
-	m_aryLocalizerPointF.RemoveAll();
+	ClearLocalizerPoints();
 
 	RedrawWnd();
 }
@@ -479,7 +479,8 @@ BOOL CStudyViewer::DrawLocalizer(CDC* pDC)
 		return FALSE;
 	}
 
-	if (m_aryLocalizerPointF.GetCount() < MAX_LOCALIZER_POINT_COUNT)
+	if (m_ptLocalizerStart.X == m_ptLocalizerEnd.X &&
+		m_ptLocalizerStart.Y == m_ptLocalizerEnd.Y)
 	{
 		return FALSE;
 	}
@@ -495,18 +496,10 @@ BOOL CStudyViewer::DrawLocalizer(CDC* pDC)
 
 	INT_PTR iEnd = 0;
 
-	for (INT_PTR iStart = 0; iStart < MAX_LOCALIZER_POINT_COUNT; iStart++)
-	{
-		iEnd = iStart + 1;
-		if (iEnd == MAX_LOCALIZER_POINT_COUNT)
-			iEnd = 0;
+	ptStart = util.ConvertCanvas(m_ptLocalizerStart, m_rtCanvas, m_rtImage);
+	ptEnd = util.ConvertCanvas(m_ptLocalizerEnd, m_rtCanvas, m_rtImage);
 
-		ptStart = util.ConvertCanvas(m_aryLocalizerPointF.GetAt(iStart), m_rtCanvas, m_rtImage);
-		ptEnd = util.ConvertCanvas(m_aryLocalizerPointF.GetAt(iEnd), m_rtCanvas, m_rtImage);
-
-		graphics.DrawLine(&penLine, ptStart, ptEnd);
-		//graphics.DrawLine(&penLine, m_aryLocalizerPointF.GetAt(iStart), m_aryLocalizerPointF.GetAt(iEnd));
-	}
+	graphics.DrawLine(&penLine, ptStart, ptEnd);
 
 }
 
@@ -988,10 +981,7 @@ BOOL CStudyViewer::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: Add your message handler code here and/or call default
 
-	if (m_aryLocalizerPointF.GetCount() > 0)
-	{
-		m_aryLocalizerPointF.RemoveAll();
-	}
+	ClearLocalizerPoints();
 
 	if (nFlags & MK_SHIFT)
 	{
@@ -1014,10 +1004,7 @@ void CStudyViewer::OnLButtonDown(UINT nFlags, CPoint point)
 	if (!m_pStudy)
 		return;
 
-	if (m_aryLocalizerPointF.GetCount() > 0)
-	{
-		m_aryLocalizerPointF.RemoveAll();
-	}
+	ClearLocalizerPoints();
 
 	if (m_pParent->IsKindOf(RUNTIME_CLASS(CLayoutManager)))
 	{
