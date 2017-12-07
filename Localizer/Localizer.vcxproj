@@ -92,6 +92,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Program Files (x86)\LEAD Technologies\LEADTOOLS 17\Include;C:\Program Files (x86)\LEAD Technologies\LEADTOOLS 17\Include\ClassLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -115,10 +116,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\LEAD Technologies\LEADTOOLS 17\Include\ClassLib;C:\Program Files (x86)\LEAD Technologies\LEADTOOLS 17\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\LEAD Technologies\LEADTOOLS 17\Lib\CDLLVC10\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -196,12 +199,15 @@
     <ClInclude Include="DicomImage.h" />
     <ClInclude Include="DicomImageProcessor.h" />
     <ClInclude Include="DicomParser.h" />
+    <ClInclude Include="GeometryMath.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="LayoutManager.h" />
+    <ClInclude Include="Line.h" />
     <ClInclude Include="LLDicomDS.h" />
     <ClInclude Include="LocalizerCore.h" />
     <ClInclude Include="OleDataSourceEx.h" />
     <ClInclude Include="OleDropTargetEx.h" />
+    <ClInclude Include="Plane.h" />
     <ClInclude Include="StudyViewer.h" />
     <ClInclude Include="Localizer.h" />
     <ClInclude Include="LocalizerDoc.h" />
@@ -214,6 +220,7 @@
     <ClInclude Include="Study.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="template_image_process.h" />
+    <ClInclude Include="Vectors.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CoordinatorUtill.cpp" />
@@ -221,12 +228,15 @@
     <ClCompile Include="DicomImage.cpp" />
     <ClCompile Include="DicomImageProcessor.cpp" />
     <ClCompile Include="DicomParser.cpp" />
+    <ClCompile Include="GeometryMath.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="LayoutManager.cpp" />
+    <ClCompile Include="Line.cpp" />
     <ClCompile Include="LLDicomDS.cpp" />
     <ClCompile Include="LocalizerCore.cpp" />
     <ClCompile Include="OleDataSourceEx.cpp" />
     <ClCompile Include="OleDropTargetEx.cpp" />
+    <ClCompile Include="Plane.cpp" />
     <ClCompile Include="StudyViewer.cpp" />
     <ClCompile Include="Localizer.cpp" />
     <ClCompile Include="LocalizerDoc.cpp" />

@@ -28,6 +28,9 @@
     <Filter Include="Localizer">
       <UniqueIdentifier>{5a17770c-053d-47ee-8d6b-75dda619a3f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GeometryMath">
+      <UniqueIdentifier>{58c6e933-862c-41d2-9765-f98c3306b814}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -102,6 +105,18 @@
     <ClInclude Include="OleDropTargetEx.h">
       <Filter>Util</Filter>
     </ClInclude>
+    <ClInclude Include="GeometryMath.h">
+      <Filter>GeometryMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Line.h">
+      <Filter>GeometryMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
+      <Filter>GeometryMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Vectors.h">
+      <Filter>GeometryMath</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Localizer.cpp">
@@ -163,6 +178,15 @@
     </ClCompile>
     <ClCompile Include="OleDropTargetEx.cpp">
       <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryMath.cpp">
+      <Filter>GeometryMath</Filter>
+    </ClCompile>
+    <ClCompile Include="Line.cpp">
+      <Filter>GeometryMath</Filter>
+    </ClCompile>
+    <ClCompile Include="Plane.cpp">
+      <Filter>GeometryMath</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -421,66 +421,82 @@ BOOL CMainFrame::AddStudyToLayoutManager()
 
 BOOL CMainFrame::AddDicomDS(CLLDicomDS dsLLDicomds)
 {
-	if (m_aryLLDicomds.GetCount() <= 0)
+	TRY
 	{
-		m_aryLLDicomds.Add(dsLLDicomds);
-		AddStudy(dsLLDicomds);
-		return TRUE;
-	}
-		
-	BOOL bFindStudy = FALSE;
-	CLLDicomDS dsStoredLLDicomDS;
-	for (INT_PTR iParser = 0; iParser < m_aryLLDicomds.GetCount(); iParser++)
-	{
-		dsStoredLLDicomDS = m_aryLLDicomds.GetAt(iParser);
-		if (dsStoredLLDicomDS.GetStudyID().CompareNoCase(dsLLDicomds.GetStudyID()) == 0)
+		if (m_aryLLDicomds.GetCount() <= 0)
 		{
-			bFindStudy = TRUE;
-			break;
+			m_aryLLDicomds.Add(dsLLDicomds);
+			AddStudy(dsLLDicomds);
+			return TRUE;
+		}
+
+		BOOL bFindStudy = FALSE;
+		CLLDicomDS dsStoredLLDicomDS;
+		for (INT_PTR iParser = 0; iParser < m_aryLLDicomds.GetCount(); iParser++)
+		{
+			dsStoredLLDicomDS = m_aryLLDicomds.GetAt(iParser);
+			if (dsStoredLLDicomDS.GetStudyID().CompareNoCase(dsLLDicomds.GetStudyID()) == 0)
+			{
+				bFindStudy = TRUE;
+				break;
+			}
+		}
+
+		if (bFindStudy == FALSE)
+		{
+			m_aryLLDicomds.Add(dsLLDicomds);
+			AddStudy(dsLLDicomds);
+			return TRUE;
+		}
+
+		BOOL bFindSeries = FALSE;
+		for (INT_PTR iParser = 0; iParser < m_aryLLDicomds.GetCount(); iParser++)
+		{
+			dsStoredLLDicomDS = m_aryLLDicomds.GetAt(iParser);
+			if (dsStoredLLDicomDS.GetSeriesID().CompareNoCase(dsLLDicomds.GetSeriesID()) == 0)
+			{
+				bFindSeries = TRUE;
+				break;
+			}
+		}
+
+		if (bFindSeries == FALSE)
+		{
+			m_aryLLDicomds.Add(dsLLDicomds);
+			AddSeries(dsLLDicomds);
+			return TRUE;
+		}
+
+		BOOL bFindInstance = FALSE;
+		for (INT_PTR iParser = 0; iParser < m_aryLLDicomds.GetCount(); iParser++)
+		{
+			if (dsStoredLLDicomDS.GetInstanceID().CompareNoCase(dsLLDicomds.GetInstanceID()) == 0)
+			{
+				bFindInstance = TRUE;
+				break;
+			}
+		}
+
+		if (bFindInstance == FALSE)
+		{
+			m_aryLLDicomds.Add(dsLLDicomds);
+			AddInstance(dsLLDicomds);
+			return TRUE;
 		}
 	}
-
-	if (bFindStudy == FALSE)
+	CATCH_ALL(e)
 	{
-		m_aryLLDicomds.Add(dsLLDicomds);
-		AddStudy(dsLLDicomds);
-		return TRUE;
-	}
-
-	BOOL bFindSeries = FALSE;
-	for (INT_PTR iParser = 0; iParser < m_aryLLDicomds.GetCount(); iParser++)
-	{
-		dsStoredLLDicomDS = m_aryLLDicomds.GetAt(iParser);
-		if (dsStoredLLDicomDS.GetSeriesID().CompareNoCase(dsLLDicomds.GetSeriesID()) == 0)
+		if (e->IsKindOf(RUNTIME_CLASS(CMemoryException)))
 		{
-			bFindSeries = TRUE;
-			break;
+			AfxMessageBox(_T("MEMORY EXCEPTION"));
+		}
+		else
+		{
+			AfxMessageBox(_T("Fail"));
 		}
 	}
-
-	if (bFindSeries == FALSE)
-	{
-		m_aryLLDicomds.Add(dsLLDicomds);
-		AddSeries(dsLLDicomds);
-		return TRUE;
-	}
-
-	BOOL bFindInstance = FALSE;
-	for (INT_PTR iParser = 0; iParser < m_aryLLDicomds.GetCount(); iParser++)
-	{
-		if (dsStoredLLDicomDS.GetInstanceID().CompareNoCase(dsLLDicomds.GetInstanceID()) == 0)
-		{
-			bFindInstance = TRUE;
-			break;
-		}
-	}
-
-	if (bFindInstance == FALSE)
-	{
-		m_aryLLDicomds.Add(dsLLDicomds);
-		AddInstance(dsLLDicomds);
-		return TRUE;
-	}
+	END_CATCH_ALL
+	
 
 	return FALSE;
 }

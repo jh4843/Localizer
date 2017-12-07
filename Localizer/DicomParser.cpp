@@ -590,8 +590,8 @@ BOOL CDicomParser::ParseImageInfo()
 					{
 						pElement = pTempElement;
 					}
-					pCurPositionElement = pElement;
 				}
+				pCurPositionElement = pElement;
 
 				pDouble_X = GetDoubleValue(pElement, 0, 1);
 				pDouble_Y = GetDoubleValue(pElement, 1, 1);
@@ -623,7 +623,6 @@ BOOL CDicomParser::ParseImageInfo()
 					{
 						pElement = pTempElement;
 					}
-					pCurOrientationElement = pElement;
 				}
 
 				pCurOrientationElement = pElement;

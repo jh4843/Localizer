@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "LocalizerCore.h"
+#include "Vectors.h"
+#include "Line.h"
+#include "Plane.h"
 
 
 CLocalizerCore::CLocalizerCore()
@@ -40,7 +43,7 @@ CLocalizerCore::LOCALIZER_IMAGE_INFO_ CLocalizerCore::GetLocalizerImageInfo(CLLD
 
 	FLOAT nImageXSpacing;
 	FLOAT nImageYSpacing;
-	if (dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelXSpacing <= nFrameIndex)
+	if (dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelXSpacing <= 0)
 	{
 		nImageXSpacing = 1;
 	}
@@ -50,7 +53,7 @@ CLocalizerCore::LOCALIZER_IMAGE_INFO_ CLocalizerCore::GetLocalizerImageInfo(CLLD
 	}
 
 
-	if (dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelYSpacing <= nFrameIndex)
+	if (dsSrcDicomDS->m_aryDicomImage.GetAt(nFrameIndex).m_stImageInfo.m_fPixelYSpacing <= 0)
 	{
 		nImageYSpacing = 1;
 	}
@@ -119,6 +122,19 @@ void CLocalizerCore::CalcReferenceLine()
 	if (!pSrcStudyViewer->GetStudy())
 		return;
 
+	GeometryMath::Plane planeSrc;
+	GeometryMath::Plane planeDest;
+	GeometryMath::Line lineIntersect;
+	GeometryMath::Line lineDestRect[4];
+	GeometryMath::Vector3 vec3SrcRect[4];
+	GeometryMath::Vector3 vec3DestRect[4];
+	GeometryMath::Vector3 vecDrawPoint[2];
+
+	GeometryMath::Vector3 vec3Start;
+	GeometryMath::Vector3 vec3End;
+
+	INT_PTR nIntersectCount = 0;
+	
 	CLLDicomDS* dsSrcDicomDS = pSrcStudyViewer->GetDisplayingDicomDS();
 	LOCALIZER_IMAGE_INFO_ stSrcLocalizerImageInfo = GetLocalizerImageInfo(dsSrcDicomDS, pSrcStudyViewer->GetCurrentFrameIndex());
 
@@ -133,14 +149,20 @@ void CLocalizerCore::CalcReferenceLine()
 	FLOAT fSrcPosY[4] = { 0.0, };
 	FLOAT fSrcPosZ[4] = { 0.0, };
 
-	CArray<POINT_3D_, POINT_3D_> ary_3D_Point;
-	CLocalizerCore::POINT_3D_ addedPoint;
+	FLOAT fDestPosX[4] = { 0.0, };
+	FLOAT fDestPosY[4] = { 0.0, };
+	FLOAT fDestPosZ[4] = { 0.0, };
+
+	FLOAT fSrcRotatedPosX[4] = { 0.0, };
+	FLOAT fSrcRotatedPosY[4] = { 0.0, };
+	FLOAT fSrcRotatedPosZ[4] = { 0.0, };
+
+	FLOAT fDestRotatedPosX[4] = { 0.0, };
+	FLOAT fDestRotatedPosY[4] = { 0.0, };
+	FLOAT fDestRotatedPosZ[4] = { 0.0, };
+
 	Gdiplus::PointF ptStart;
 	Gdiplus::PointF ptEnd;
-
-	FLOAT fSrcPosXBasedOnDest;
-	FLOAT fSrcPosYBasedOnDest;
-	FLOAT fSrcPosZBasedOnDest;
 
 	for (int iStudyViewer = 0; iStudyViewer < m_aryStudyViewer.GetCount(); iStudyViewer++)
 	{
@@ -158,8 +180,6 @@ void CLocalizerCore::CalcReferenceLine()
 		if (pSrcStudyViewer->GetStudy()->IsSameStudyID(pStudyViewer->GetStudy()->GetStudyId()) == FALSE)
 			continue;
 
-		addedPoint.Init();
-		ary_3D_Point.RemoveAll();
 		pStudyViewer->ClearLocalizerPoints();
 		dsDestDicomDS = pStudyViewer->GetDisplayingDicomDS();
 		stDestLocalizerImageInfo = GetLocalizerImageInfo(dsDestDicomDS, pStudyViewer->GetCurrentFrameIndex());
@@ -167,41 +187,88 @@ void CLocalizerCore::CalcReferenceLine()
 		if (IsSamePatientOrientation(stSrcLocalizerImageInfo, stDestLocalizerImageInfo))
 			continue;
 
-		for (INT_PTR iInit = 0; iInit < 4; iInit++)
-		{
-			fSrcPosX[iInit] = stSrcLocalizerImageInfo.fRectPosX[iInit];
-			fSrcPosY[iInit] = stSrcLocalizerImageInfo.fRectPosY[iInit];
-			fSrcPosZ[iInit] = stSrcLocalizerImageInfo.fRectPosZ[iInit];
-		}
-				
 		for (INT_PTR iRect = 0; iRect < 4; iRect++)
 		{
-			fSrcPosXBasedOnDest = 0.0;
-			fSrcPosYBasedOnDest = 0.0;
-			fSrcPosZBasedOnDest = 0.0;
+			fDestPosX[iRect] = stDestLocalizerImageInfo.fRectPosX[iRect] - stDestLocalizerImageInfo.fRectPosX[0];
+			fDestPosY[iRect] = stDestLocalizerImageInfo.fRectPosY[iRect] - stDestLocalizerImageInfo.fRectPosY[0];
+			fDestPosZ[iRect] = stDestLocalizerImageInfo.fRectPosZ[iRect] - stDestLocalizerImageInfo.fRectPosZ[0];
 
-			// Move points to calculate based on destination image information.
-			fSrcPosX[iRect] -= stDestLocalizerImageInfo.fRectPosX[0];
-			fSrcPosY[iRect] -= stDestLocalizerImageInfo.fRectPosY[0];
-			fSrcPosZ[iRect] -= stDestLocalizerImageInfo.fRectPosZ[0];
+			RotateBasedOnDestOrientation(stDestLocalizerImageInfo, fDestPosX[iRect], fDestPosY[iRect], fDestPosZ[iRect],
+				fDestRotatedPosX[iRect], fDestRotatedPosY[iRect], fDestRotatedPosZ[iRect]);
 
-			RotateBasedOnDestOrientation(stDestLocalizerImageInfo, fSrcPosX[iRect], fSrcPosY[iRect], fSrcPosZ[iRect],
-				fSrcPosXBasedOnDest, fSrcPosYBasedOnDest, fSrcPosZBasedOnDest);
+			fDestRotatedPosZ[iRect] = 0;
 
-			fSrcXPosInDestImage_Pixel[iRect] = INT_PTR(fSrcPosXBasedOnDest / stDestLocalizerImageInfo.m_fPixelXSpacing + 0.5);
-			fSrcYPosInDestImage_Pixel[iRect] = INT_PTR(fSrcPosYBasedOnDest / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
-			fSrcZPosInDestImage_Pixel[iRect] = INT_PTR(fSrcPosZBasedOnDest / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
-			
-			addedPoint.Set(fSrcXPosInDestImage_Pixel[iRect], fSrcYPosInDestImage_Pixel[iRect], fSrcZPosInDestImage_Pixel[iRect]);
-
-			ary_3D_Point.Add(addedPoint);
+			vec3DestRect[iRect].set(fDestRotatedPosX[iRect], fDestRotatedPosY[iRect], fDestRotatedPosZ[iRect]);
 		}
 
-		ptStart = Gdiplus::PointF(0.0, 0.0);
-		ptEnd = Gdiplus::PointF(0.0, 0.0);
-		CalcContactZSurface(&ary_3D_Point, ptStart, ptEnd);
+		planeDest.set(vec3DestRect[0], vec3DestRect[1], vec3DestRect[2]);
 
-		pStudyViewer->SetLocalizerPoints(ptStart, ptEnd);
+		for (INT_PTR iRect = 0; iRect < 4; iRect++)
+		{
+			// Move points to calculate based on destination image information.
+			fSrcPosX[iRect] = stSrcLocalizerImageInfo.fRectPosX[iRect] - stDestLocalizerImageInfo.fRectPosX[0];
+			fSrcPosY[iRect] = stSrcLocalizerImageInfo.fRectPosY[iRect] - stDestLocalizerImageInfo.fRectPosY[0];
+			fSrcPosZ[iRect] = stSrcLocalizerImageInfo.fRectPosZ[iRect] - stDestLocalizerImageInfo.fRectPosZ[0];
+
+			RotateBasedOnDestOrientation(stDestLocalizerImageInfo, fSrcPosX[iRect], fSrcPosY[iRect], fSrcPosZ[iRect],
+				fSrcRotatedPosX[iRect], fSrcRotatedPosY[iRect], fSrcRotatedPosZ[iRect]);
+
+			vec3SrcRect[iRect].set(fSrcRotatedPosX[iRect], fSrcRotatedPosY[iRect], fSrcRotatedPosZ[iRect]);
+		}
+
+		planeSrc.set(vec3SrcRect[0], vec3SrcRect[1], vec3SrcRect[2]);
+
+		lineIntersect = planeSrc.intersect(planeDest);
+		if (lineIntersect.getDirection() == GeometryMath::Vector3(INFINITY, INFINITY, INFINITY) ||
+			lineIntersect.getPoint() == GeometryMath::Vector3(INFINITY, INFINITY, INFINITY))
+		{
+			continue;
+		}
+
+		INT_PTR iSide = 0;
+		for (iSide = 0; iSide < 4; iSide++)
+		{
+			INT_PTR iNext;
+			if (iSide == 3)
+			{
+				iNext = 0;
+			}
+			else
+			{
+				iNext = iSide + 1;
+			}
+			
+			vec3Start.set(fDestRotatedPosX[iSide], fDestRotatedPosY[iSide], fDestRotatedPosZ[iSide]);
+			vec3End.set(fDestRotatedPosX[iNext], fDestRotatedPosY[iNext], fDestRotatedPosZ[iNext]);
+
+			lineDestRect[iSide].setWith2Points(vec3Start, vec3End);
+		}
+
+		nIntersectCount = 0;
+		float fOffset = 0.01;	// sometime epsilon data occur
+		for (iSide = 0; iSide < 4; iSide++)
+		{
+			GeometryMath::Vector3 vec3Temp = lineDestRect[iSide].intersect(lineIntersect);
+			if (vec3Temp != GeometryMath::Vector3(INFINITY, INFINITY, INFINITY) &&
+				vec3Temp.x >= (fDestRotatedPosX[0] - fOffset) &&
+				vec3Temp.x <= (fDestRotatedPosX[2] + fOffset) &&
+				vec3Temp.y >= (fDestRotatedPosY[0] - fOffset) &&
+				vec3Temp.y <= (fDestRotatedPosY[2] + fOffset)	)
+			{
+				vecDrawPoint[nIntersectCount++] = vec3Temp;
+			}
+
+ 			if (nIntersectCount >= 2)
+ 				break;
+		}
+		
+		if (nIntersectCount == 2)
+		{
+			ptStart = Gdiplus::PointF(vecDrawPoint[0].x / stDestLocalizerImageInfo.m_fPixelXSpacing + 0.5, vecDrawPoint[0].y / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
+			ptEnd = Gdiplus::PointF(vecDrawPoint[1].x / stDestLocalizerImageInfo.m_fPixelXSpacing + 0.5, vecDrawPoint[1].y / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
+
+			pStudyViewer->SetLocalizerPoints(ptStart, ptEnd);
+		}
 	}
 }
 
@@ -245,6 +312,7 @@ BOOL CLocalizerCore::IsSamePatientOrientation(LOCALIZER_IMAGE_INFO_ stSrcLocaliz
 	return TRUE;
 }
 
+/*
 BOOL CLocalizerCore::CalcContactZSurface(CArray<CLocalizerCore::POINT_3D_, CLocalizerCore::POINT_3D_> *ary3DPoint, Gdiplus::PointF &ptStart, Gdiplus::PointF &ptEnd)
 {
 	BOOL bRes = FALSE;
@@ -434,3 +502,4 @@ CLocalizerCore::POINT_3D_ CLocalizerCore::GetInterSectionWithZ0(CLocalizerCore::
 
 	return ptRes;
 }
+*/

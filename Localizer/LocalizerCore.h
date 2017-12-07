@@ -80,40 +80,40 @@ public:
 
 	}LOCALIZER_IMAGE_INFO_;
 
-	typedef struct _THIRD_DIMENSION_POINT_
-	{
-		// Position
-		float fX;
-		float fY;
-		float fZ;
-
-		_THIRD_DIMENSION_POINT_()
-		{
-			Init();
-		}
-
-		void Init()
-		{
-			fX = 0.0;
-			fY = 0.0;
-			fZ = 0.0;
-		}
-
-		void Set(float x, float y, float z)
-		{
-			fX = x;
-			fY = y;
-			fZ = z;
-		}
-
-		void operator=(const _THIRD_DIMENSION_POINT_& obj)
-		{
-			fX = obj.fX;
-			fY = obj.fY;
-			fZ = obj.fZ;
-		}
-
-	} POINT_3D_;
+// 	typedef struct _THIRD_DIMENSION_POINT_
+// 	{
+// 		// Position
+// 		float fX;
+// 		float fY;
+// 		float fZ;
+// 
+// 		_THIRD_DIMENSION_POINT_()
+// 		{
+// 			Init();
+// 		}
+// 
+// 		void Init()
+// 		{
+// 			fX = 0.0;
+// 			fY = 0.0;
+// 			fZ = 0.0;
+// 		}
+// 
+// 		void Set(float x, float y, float z)
+// 		{
+// 			fX = x;
+// 			fY = y;
+// 			fZ = z;
+// 		}
+// 
+// 		void operator=(const _THIRD_DIMENSION_POINT_& obj)
+// 		{
+// 			fX = obj.fX;
+// 			fY = obj.fY;
+// 			fZ = obj.fZ;
+// 		}
+// 
+// 	} POINT_3D_;
 
 public:
 	CLocalizerCore();
@@ -138,8 +138,8 @@ private:
 	LOCALIZER_IMAGE_INFO_ GetLocalizerImageInfo(CLLDicomDS* dsSrcDicomDS, INT_PTR nFrameIndex);
 	void RotateBasedOnDestOrientation(LOCALIZER_IMAGE_INFO_ stDestLocalizerImageInfo,	FLOAT fSrcPosX, FLOAT fSrcPosY, FLOAT fSrcPosZ,	FLOAT &fDestPosX, FLOAT &fDestPosY, FLOAT &fDestPosZ);
 	BOOL IsSamePatientOrientation(LOCALIZER_IMAGE_INFO_ stSrcLocalizerImageInfo, LOCALIZER_IMAGE_INFO_ stDestLocalizerImageInfo);
-	BOOL CalcContactZSurface(CArray<CLocalizerCore::POINT_3D_, CLocalizerCore::POINT_3D_> *ary3DPoint, Gdiplus::PointF &ptStart, Gdiplus::PointF &ptEnd);
-	double CalcDistance(CLocalizerCore::POINT_3D_ ptSrc, CLocalizerCore::POINT_3D_ ptDest);
-	CLocalizerCore::POINT_3D_ GetInterSectionWithZ0(CLocalizerCore::POINT_3D_ ptStart, CLocalizerCore::POINT_3D_ ptEnd);
+	//BOOL CalcContactZSurface(CArray<CLocalizerCore::POINT_3D_, CLocalizerCore::POINT_3D_> *ary3DPoint, Gdiplus::PointF &ptStart, Gdiplus::PointF &ptEnd);
+	//double CalcDistance(CLocalizerCore::POINT_3D_ ptSrc, CLocalizerCore::POINT_3D_ ptDest);
+	//CLocalizerCore::POINT_3D_ GetInterSectionWithZ0(CLocalizerCore::POINT_3D_ ptStart, CLocalizerCore::POINT_3D_ ptEnd);
 };
 

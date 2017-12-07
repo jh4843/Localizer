@@ -107,6 +107,8 @@ BOOL CLocalizerApp::InitInstance()
 		AfxMessageBox(_T("Check Medical Net Server License"));
 	}
 
+	Sleep(1000);
+
 	GdiplusStartupInput gpsi;
 	if (::GdiplusStartup(&m_nGdiPlusToken, &gpsi, NULL) != Ok)
 	{
