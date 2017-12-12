@@ -2,7 +2,6 @@
 #include "DicomImage.h"
 #include "DicomImageProcessor.h"
 
-
 CDicomImage::CDicomImage()
 {
 	m_pImageData = nullptr;
@@ -26,7 +25,7 @@ void CDicomImage::Init()
 	m_stImageInfo.Init();
 }
 
-BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle)
+BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle, pBITMAPHANDLE pOverlayBitmapHandle)
 {
 	TRY
 	{
@@ -39,6 +38,12 @@ BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle)
 			AfxThrowMemoryException();
 			return FALSE;
 		}
+
+// 		LBitmap lBitmap;
+// 		lBitmap.SetHandle(pBitmapHandle);
+// 		L_INT nRet = lBitmap.SetOverlay(0, pOverlayBitmapHandle, OVERLAY_COPY);
+// 
+// 		pBitmapHandle = lBitmap.GetHandle();
 
 		ZeroMemory(m_pImageData, nPixelDataSize);
 
@@ -75,6 +80,21 @@ BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle)
 			{
 				memcpy_s(pDest, nDestLine, pSrc, nCopySize);
 			}
+		}
+
+		if (pOverlayBitmapHandle)
+		{
+			CDicomImageProcessor* pImgProcessor = new CDicomImageProcessor;
+
+			pImgProcessor->BurnOverlayOnImage(pOverlayBitmapHandle->Addr.Windows.pData,
+				m_pImageData,
+				(UINT)m_stImageInfo.m_nTotalAllocatedBytes,
+				(UINT)pOverlayBitmapHandle->BitsPerPixel,
+				(UINT)pOverlayBitmapHandle->BytesPerLine,
+				(UINT)pOverlayBitmapHandle->Height,
+				(UINT)Bits2MaxValue(m_stImageInfo.m_nBitsPerPixel));
+
+			delete pImgProcessor;
 		}
 
 		if (pBitmapHandle->pLUT)
@@ -120,6 +140,8 @@ BOOL CDicomImage::FreeDicomImage()
 
 	return TRUE;
 }
+
+
 
 BOOL CDicomImage::CopyLead2UserBuf(LBitmap* pBitmap, void* pImage, int nWidth, int nHeight, int iAllocBytes)
 {

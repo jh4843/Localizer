@@ -3,12 +3,13 @@
 #include "MyDicomLanguage.h"
 #include "DicomImage.h"
 #include "LLDicomDS.h"
-
 #include <math.h>
 
-class CDicomParser :
-	public LDicomDS
+class CLLDicomDS;
+class CDicomParser : public LDicomDS
 {
+	friend CLLDicomDS;
+
 public:
 	CDicomParser();
 	~CDicomParser();
@@ -48,7 +49,11 @@ public:
 	//
 	BOOL ParseDicomHeader();
 	BOOL ParseImageInfo();
+	BOOL ParseOverlayInfo(pBITMAPHANDLE pOverlayBitmapHandle, CDicomImage* pOverlayImgInfo);
 
+	L_UINT GetOverlayImageFromOrigin(pBITMAPHANDLE pBitmapHandle, pBITMAPHANDLE pOverlayBitmapHandle);
+
+	L_UINT16 DeleteAllOverlays();
 	UINT MoveRootElement();
 	VOID SetFileName(CString strFileName);
 	VOID SetCurrentElement(pDICOMELEMENT pCurrentElement);

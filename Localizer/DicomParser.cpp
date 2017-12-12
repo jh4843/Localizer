@@ -848,6 +848,143 @@ BOOL CDicomParser::ParseImageInfo()
 	return TRUE;
 }
 
+BOOL CDicomParser::ParseOverlayInfo(pBITMAPHANDLE pOverlayBitmapHandle, CDicomImage* pOverlayImgInfo)
+{
+	// nWidth, nHeight, m_nBitsPerPixel, nSamplesPerPixel is already set.
+	pOverlayImgInfo->m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(pOverlayImgInfo->m_stImageInfo.m_nBitsPerPixel);
+	pOverlayImgInfo->m_stImageInfo.m_nTotalAllocatedBytes = (UINT)(pOverlayImgInfo->m_stImageInfo.m_nBytesPerPixel*pOverlayImgInfo->m_stImageInfo.m_nSamplesPerPixel);
+	int nBytesPerLineX = ((pOverlayImgInfo->m_stImageInfo.m_nWidth * pOverlayImgInfo->m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+	int nBytesPerLineY = ((pOverlayImgInfo->m_stImageInfo.m_nHeight * pOverlayImgInfo->m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+	pOverlayImgInfo->m_stImageInfo.m_nWidth = nBytesPerLineX / pOverlayImgInfo->m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+	pOverlayImgInfo->m_stImageInfo.m_nHeight = nBytesPerLineY / pOverlayImgInfo->m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+	pOverlayImgInfo->m_stImageInfo.m_nBytesPerLine = pOverlayImgInfo->m_stImageInfo.m_nWidth * pOverlayImgInfo->m_stImageInfo.m_nTotalAllocatedBytes;
+
+	pOverlayImgInfo->m_stImageInfo.m_fW1 = 0.0f;
+	pOverlayImgInfo->m_stImageInfo.m_fW2 = Bits2MaxValue(pOverlayImgInfo->m_stImageInfo.m_nBitsPerPixel);
+
+	return TRUE;
+}
+
+
+L_UINT CDicomParser::GetOverlayImageFromOrigin(pBITMAPHANDLE pOrgImageBitmapHandle, pBITMAPHANDLE pOverlayBitmapHandle)
+{
+	OVERLAYATTRIBUTES OverlayAttributes = { 0 };
+	L_UINT            uOverlayCount = 0;
+	L_UINT            uOverlayIndex;
+	L_INT             nLEADRet;
+	L_UINT16          uDICOMRet;
+	L_INT             GroupNumber = 0;
+	L_BOOL            IsOverlayInDataset = FALSE;
+
+
+	//(1)Sanity Check ! 
+	if (NULL == pOrgImageBitmapHandle)
+	{
+		return 0;
+	}
+	//(2)Do we have any overlays at all ? 
+	uDICOMRet = GetOverlayCount(&uOverlayCount);
+	if (DICOM_SUCCESS != uDICOMRet)
+	{
+		return -1;
+	}
+	// If no overlays just return 
+	if (0 == uOverlayCount)
+	{
+		return uOverlayCount;
+	}
+	//(3)Blow away all the overlays in the file 
+// 	uDICOMRet = DeleteAllOverlays();
+// 	if (DICOM_SUCCESS != uDICOMRet)
+// 	{
+// 		return -2;
+// 	}
+	//(4) Loop through the overlays and add them into the DICOM file 
+	for (uOverlayIndex = 0; uOverlayIndex < uOverlayCount; uOverlayIndex++)
+	{
+		memset(&OverlayAttributes, 0, sizeof(OVERLAYATTRIBUTES));
+		memset(pOverlayBitmapHandle, 0, sizeof(BITMAPHANDLE));
+		// Get overlay attributes 
+		uDICOMRet = this->GetOverlayAttributes(uOverlayIndex,
+			&OverlayAttributes,
+			sizeof(OverlayAttributes),
+			&GroupNumber,
+			&IsOverlayInDataset,
+			//0);
+			OVERLAYATTRIBUTES_ORIGIN |
+			OVERLAYATTRIBUTES_FLAGS |
+			OVERLAYATTRIBUTES_BITINDEX |
+			OVERLAYATTRIBUTES_DICOM);
+		
+		if (DICOM_SUCCESS != uDICOMRet)
+		{
+			return -3;
+		}
+
+		OverlayAttributes.uFlags |= OVERLAY_AUTOPAINT | OVERLAY_AUTOPROCESS;
+		OverlayAttributes.crColor = RGB(0xFF, 0xFF, 0xFF);
+
+		// burn overlays which need to be part of the image 
+		if (OverlayAttributes.uFlags &OVERLAY_USEBITPLANE)
+		{
+			// Set overlay attributes inside DICOM 
+			uDICOMRet = this->SetOverlayAttributes(uOverlayIndex, &OverlayAttributes, 0);
+			if (DICOM_SUCCESS != uDICOMRet)
+			{
+				return -4;
+			}
+
+			nLEADRet = L_UpdateBitmapOverlayBits(pOrgImageBitmapHandle,
+				uOverlayIndex,
+				SETOVERLAYBITS_FROMOVERLAY);
+			if (SUCCESS != nLEADRet)
+			{
+				return -5;
+			}
+		}
+
+		// Get the overlay data (if it's not part of the image) 
+		nLEADRet = L_GetOverlayBitmap(pOrgImageBitmapHandle,
+			uOverlayIndex,
+			pOverlayBitmapHandle,
+			sizeof(BITMAPHANDLE),
+			OVERLAY_NOCOPY);
+		if (SUCCESS != nLEADRet)
+		{
+			return -6;
+		}
+		// Set overlay data into DICOM 
+		uDICOMRet = this->SetOverlayBitmap(uOverlayIndex, pOverlayBitmapHandle, 0);
+		if (DICOM_SUCCESS != uDICOMRet)
+		{
+			return -7;
+		}
+	}
+	return uOverlayCount;
+
+}
+
+L_UINT16 CDicomParser::DeleteAllOverlays()
+{
+	L_UINT16 nRet;
+	L_UINT   uOverlayCount = 0;
+	L_UINT16 uOverlayIndex;
+	nRet = this->GetOverlayCount(&uOverlayCount);
+	if (DICOM_SUCCESS != nRet)
+	{
+		return nRet;
+	}
+	for (uOverlayIndex = 0; uOverlayIndex < uOverlayCount; uOverlayIndex++)
+	{
+		nRet = this->DeleteOverlay(uOverlayIndex, 0);
+		if (DICOM_SUCCESS != nRet)
+		{
+			return nRet;
+		}
+	}
+	return DICOM_SUCCESS;
+}
+
 UINT CDicomParser::MoveRootElement()
 {
 	pDICOMELEMENT pElement = LDicomDS::GetFirstElement(NULL, FALSE, FALSE);

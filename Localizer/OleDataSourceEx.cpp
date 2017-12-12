@@ -10,6 +10,7 @@ COleDataSourceEx::COleDataSourceEx()
 
 COleDataSourceEx::~COleDataSourceEx()
 {
+	m_pDragSourceObject = nullptr;
 }
 
 void COleDataSourceEx::SetDragSourceObject(CObject* pObject, CRect rtEffect)
@@ -26,9 +27,9 @@ void COleDataSourceEx::SetDragSourceObject(CObject* pObject, CRect rtEffect)
 		strBuffer.Format(_T("STUDYVIEW:%s,%d,%d"), pStudyViewer->GetStudy()->GetStudyId(), pStudyViewer->GetCurrentSeriesIndex(), pStudyViewer->GetCurrentInstanceIndex());
 
 		CacheString(CF_TEXT, strBuffer);
-	}
 
-	DROPEFFECT DropEffect = DoDragDrop(DROPEFFECT_MOVE, (LPCRECT)&rtEffect);
+		DROPEFFECT DropEffect = DoDragDrop(DROPEFFECT_MOVE, (LPCRECT)&rtEffect);
+	}
 }
 
 BOOL COleDataSourceEx::CacheString(CLIPFORMAT cfFormat, LPCTSTR lpszText)

@@ -6,7 +6,10 @@
 #include "OleDataSourceEx.h"
 #include "OleDropTargetEx.h"
 
+#define IDC_IMGLISTCTRL 0
+
 //
+class CDicomImage;
 struct DIBINFO : public BITMAPINFO
 {
 	RGBQUAD arColors[255];
@@ -45,6 +48,9 @@ public:
 
 	CStudyViewer(INT_PTR nLayoutIndex);
 	~CStudyViewer();
+
+public:
+	//HWND m_hLImgControl;
 
 protected:
 	CInstance* m_pDisplayedInstance;	// 가지고 있을 필요 없을거 같긴하다.
@@ -116,11 +122,14 @@ protected:
 
 	void ChangeInstanceImageByWheel(short zDelta);
 	void ChangeSeriesImageByWheel(short zDelta);
+	
+	
 
 // Overriding
 protected:
 	virtual void Init(INT_PTR nCurSeriesIndex = 0, INT_PTR nCurInstanceIndex = 0, INT_PTR nCurFrameIndex = 0);
 	virtual BOOL CreateCtrl(CWnd* pParent);
+	//virtual L_INT CreateLEADImageList();
 	virtual BOOL Draw(CDC* pDC);
 	virtual DIBINFO* GetDibInfo();
 	virtual BOOL CalcLayout();

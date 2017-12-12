@@ -1,6 +1,7 @@
 #pragma once
 #include "DicomImage.h"
 
+class CDicomImage;
 class CLLDicomDS
 {
 public:

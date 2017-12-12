@@ -1,5 +1,4 @@
 #pragma once
-//#include "DicomParser.h"
 
 class CDicomImage
 {
@@ -108,6 +107,8 @@ public:
 
 	}IMAGE_INFO_;
 
+	
+
 public:
 	CDicomImage();
 	CDicomImage(const CDicomImage& dicomImage);
@@ -122,7 +123,7 @@ protected:
 
 public:
 	void Init();
-	BOOL LoadDicomImage(pBITMAPHANDLE pBitmapHandle);
+	BOOL LoadDicomImage(pBITMAPHANDLE pBitmapHandle, pBITMAPHANDLE pOverlayBitmapHandle = nullptr);
 	BOOL FreeDicomImage();
 
 	BOOL CopyLead2UserBuf(LBitmap* pBitmap, void* pImage, int nWidth, int nHeight, int iAllocBytes);
@@ -133,7 +134,7 @@ public:
 
 	void SetTiledPiexlData(BOOL bSet);
 	BOOL GetTiledPiexlData();
-	
+
 	void operator=(const CDicomImage& obj);
 };
 

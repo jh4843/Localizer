@@ -188,9 +188,8 @@ BOOL CLocalizerApp::InitInstance()
 int CLocalizerApp::ExitInstance()
 {
 	//TODO: handle additional resources you may have added
-	AfxOleTerm(FALSE);
-
 	LBase::UnloadLibraries(LT_ALL_LEADLIB);
+	AfxOleTerm(FALSE);
 
 	//
 	::GdiplusShutdown(m_nGdiPlusToken);

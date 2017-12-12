@@ -27,6 +27,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnApplicationLook)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnUpdateApplicationLook)
 	ON_COMMAND(ID_FILE_OPEN, &CMainFrame::OnFileOpen)
+	ON_COMMAND(ID_FILE_OPENFOLDER, &CMainFrame::OnFileOpenfolder)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -129,6 +130,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CList<UINT, UINT> lstBasicCommands;
 
 	lstBasicCommands.AddTail(ID_FILE_NEW);
+	lstBasicCommands.AddTail(ID_FILE_OPENFOLDER);
 	lstBasicCommands.AddTail(ID_FILE_OPEN);
 	lstBasicCommands.AddTail(ID_FILE_SAVE);
 	lstBasicCommands.AddTail(ID_FILE_PRINT);
@@ -151,6 +153,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	lstBasicCommands.AddTail(ID_VIEW_APPLOOK_WINDOWS_7);
 
 	CMFCToolBar::SetBasicCommands(lstBasicCommands);
+
+
 
 	return 0;
 }
@@ -294,7 +298,6 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 		return FALSE;
 	}
 
-
 	// enable customization button for all user toolbars
 	BOOL bNameValid;
 	CString strCustomize;
@@ -313,24 +316,63 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	return TRUE;
 }
 
+void CMainFrame::OnFileOpenfolder()
+{
+	CStringArray aryFilePath;
+
+	TCHAR szPath[_MAX_PATH];
+
+	TCHAR szInitDir[MAX_PATH] = { 0, };
+
+	TCHAR szTitle[MAX_PATH] = { 0, };
+	_tcscpy_s(szTitle, MAX_PATH, (_T("Choose the folder which DICOMDIR file exists.")));
+
+	LPITEMIDLIST pidl;
+	BROWSEINFO bi;
+	bi.hwndOwner = GetSafeHwnd();
+	bi.pidlRoot = nullptr;
+	bi.pszDisplayName = szPath;
+	bi.lpszTitle = szTitle;
+	bi.ulFlags = BIF_NONEWFOLDERBUTTON | BIF_RETURNONLYFSDIRS | BIF_DONTGOBELOWDOMAIN | BIF_NEWDIALOGSTYLE;
+	bi.lpfn = nullptr;
+	bi.lParam = (LPARAM)szInitDir;
+
+	pidl = SHBrowseForFolder(&bi);
+	if (!SHGetPathFromIDList(pidl, szPath))
+	{
+		return;
+	}
+
+	CString strFindPath;
+	strFindPath.Format(_T("%s\\*.*"), szPath);
+
+	FindFileInDirectory(strFindPath, aryFilePath);
+
+	ParseDicomFile(&aryFilePath);
+	AddStudyToLayoutManager();
+
+	// TODO: Add your command handler code here
+}
+
+
 void CMainFrame::OnFileOpen()
 {
-	CDicomFileDialog dicomFilDlg(TRUE);
+	CDicomFileDialog dlgDcm(TRUE);
 
 	CStringArray aryFilePath;
 
 	TCHAR szFileName[32767];
 	szFileName[0] = '\0';
 
-	dicomFilDlg.GetOFN().lpstrFile = szFileName;
-	dicomFilDlg.GetOFN().nMaxFile = _countof(szFileName);
-
-	if (dicomFilDlg.DoModal() == IDOK)
+	dlgDcm.GetOFN().lpstrFile = szFileName;
+	dlgDcm.GetOFN().nMaxFile = _countof(szFileName);
+	
+	if (dlgDcm.DoModal() == IDOK)
 	{
-		POSITION pos = dicomFilDlg.GetStartPosition();
+		POSITION pos = dlgDcm.GetStartPosition();
 		while (pos)
 		{
-			CString strFileName = dicomFilDlg.GetNextPathName(pos);
+			CString strFileName = dlgDcm.GetNextPathName(pos);
 			if (!strFileName.IsEmpty())
 			{
 				aryFilePath.Add(strFileName);
@@ -575,4 +617,38 @@ void CMainFrame::AddInstance(CLLDicomDS dsLLdicomDS)
 	}
 
 	pSeriesInfo->AddInstance(dsLLdicomDS);
+}
+
+void CMainFrame::FindFileInDirectory(CString strPath, CStringArray& aryPath)
+{
+	CFileFind fileFinder;
+	CString strFileName;
+
+	if (fileFinder.FindFile(strPath) == FALSE)
+	{
+		return;
+	}
+
+	while (fileFinder.FindNextFileW())
+	{
+		if (fileFinder.IsDots())
+			continue;
+
+		if (fileFinder.IsDirectory())
+		{
+			FindFileInDirectory(fileFinder.GetFilePath() + _T("\\*.*"), aryPath);
+			continue;
+		}
+
+		strFileName = fileFinder.GetFileName();
+		if (strFileName.Right(3) != _T("dcm") &&
+			strFileName.Find('.') != -1)
+		{
+			continue;
+		}
+
+		aryPath.Add(fileFinder.GetFilePath());
+	}
+
+	fileFinder.Close();
 }

@@ -75,9 +75,10 @@ void CStudyViewer::SetDisplayInstance()
 	FreeDisplayImage();
 	AllocDisplayImage();
 
-	CDicomImage InPutImageDS = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
-	LoadImageFromDcm(InPutImageDS);
-	InPutImageDS.GetImageProcessedImage(m_pDisplayImage, &imageDisplayInfo);
+	CDicomImage dsInputImage = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
+	
+	LoadImageFromDcm(dsInputImage);
+	dsInputImage.GetImageProcessedImage(m_pDisplayImage, &imageDisplayInfo);
 }
 
 void CStudyViewer::SetViewOnlySameSeries()
@@ -139,7 +140,7 @@ void CStudyViewer::RedrawWnd()
 	UpdateWindow();
 }
 
-void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
+void CStudyViewer::LoadImageFromDcm(CDicomImage& dsImage)
 {
 	CDicomParser* pDicomParser = new CDicomParser;
 
@@ -147,15 +148,17 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 	pDicomParser->SetDcmHeaderInfo(m_pDisplayDicomDS->m_dcmHeaderInfo);
 	pDicomParser->AddDcmImageInfo(m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex));
 
-	BITMAPHANDLE BitmapHandle;
-	pDICOMELEMENT pElement;
-	imageDicom = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
+	BITMAPHANDLE OrgImageBitmapHandle;
+	
 
-	UINT nFlags = DICOM_GETIMAGE_AUTO_APPLY_MODALITY_LUT | DICOM_GETIMAGE_AUTO_APPLY_VOI_LUT;
+	pDICOMELEMENT pElement;
+	dsImage = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex);
+
+	UINT nFlags = DICOM_GETIMAGE_AUTO_APPLY_MODALITY_LUT | DICOM_GETIMAGE_AUTO_APPLY_VOI_LUT | DICOM_GETIMAGE_AUTO_LOAD_OVERLAYS;
 
 	pElement = pDicomParser->FindLastElement(NULL, TAG_PIXEL_DATA, FALSE);
 	L_UINT16 nResult = pDicomParser->GetImage(pElement,
-		&BitmapHandle,
+		&OrgImageBitmapHandle,
 		sizeof(BITMAPHANDLE),
 		m_nCurFrameIndex,
 		0,
@@ -163,6 +166,7 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 		nFlags,
 		NULL,
 		NULL);
+
 
 	if (nResult == DICOM_ERROR_MEMORY)
 	{
@@ -172,7 +176,7 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 	{
 		Sleep(0);
 		nResult = pDicomParser->GetImage(pElement,
-			&BitmapHandle,
+			&OrgImageBitmapHandle,
 			sizeof(BITMAPHANDLE),
 			m_nCurFrameIndex,
 			0,
@@ -185,7 +189,7 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 		{
 			Sleep(0);
 			nResult = pDicomParser->GetImage(pElement,
-				&BitmapHandle,
+				&OrgImageBitmapHandle,
 				sizeof(BITMAPHANDLE),
 				m_nCurFrameIndex,
 				0,
@@ -200,86 +204,86 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.Flags.Allocated != 1)
+		if (OrgImageBitmapHandle.Flags.Allocated != 1)
 		{
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.Flags.Compressed == 1)
+		if (OrgImageBitmapHandle.Flags.Compressed == 1)
 		{
 			AfxThrowUserException();
 		}
 
 		// Not linear image data.
-		if (BitmapHandle.Flags.Tiled == 1)
+		if (OrgImageBitmapHandle.Flags.Tiled == 1)
 		{
-			imageDicom.SetTiledPiexlData(TRUE);
+			dsImage.SetTiledPiexlData(TRUE);
 		}
 
-		if (BitmapHandle.Flags.SuperCompressed == 1)
+		if (OrgImageBitmapHandle.Flags.SuperCompressed == 1)
 		{
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.Flags.UseLUT == 1)
+		if (OrgImageBitmapHandle.Flags.UseLUT == 1)
 		{
-			if (!BitmapHandle.pLUT)
+			if (!OrgImageBitmapHandle.pLUT)
 			{
 				AfxThrowUserException();
 			}
 
-			if (BitmapHandle.LUTLength < 1)
+			if (OrgImageBitmapHandle.LUTLength < 1)
 			{
 				AfxThrowUserException();
 			}
 		}
 
-		if (!BitmapHandle.Addr.Windows.pData)
+		if (!OrgImageBitmapHandle.Addr.Windows.pData)
 		{
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.Width < 2)
+		if (OrgImageBitmapHandle.Width < 2)
 		{
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.Height < 2)
+		if (OrgImageBitmapHandle.Height < 2)
 		{
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.BitsPerPixel < 1)
+		if (OrgImageBitmapHandle.BitsPerPixel < 1)
 		{
 			AfxThrowUserException();
 		}
 
-		if (BitmapHandle.BytesPerLine < 4)
+		if (OrgImageBitmapHandle.BytesPerLine < 4)
 		{
 			AfxThrowUserException();
 		}
 
-		imageDicom.FreeDicomImage();
-		imageDicom.m_stImageInfo.Init();
+		dsImage.FreeDicomImage();
+		dsImage.m_stImageInfo.Init();
 
-		if (BitmapHandle.HighBit < 1)
+		if (OrgImageBitmapHandle.HighBit < 1)
 		{
 			AfxThrowUserException();
 		}
 		else
 		{
-			imageDicom.m_stImageInfo.m_nBitsPerPixel = (UINT)(BitmapHandle.HighBit + 1);
+			dsImage.m_stImageInfo.m_nBitsPerPixel = (UINT)(OrgImageBitmapHandle.HighBit + 1);
 		}
 
 		// RGB : SamplesPerPixel = 3
-		if (BitmapHandle.BitsPerPixel == 24)
+		if (OrgImageBitmapHandle.BitsPerPixel == 24)
 		{
-			imageDicom.m_stImageInfo.m_nSamplesPerPixel = 3;
+			dsImage.m_stImageInfo.m_nSamplesPerPixel = 3;
 		}
 		// Gray : SamplesPerPixel = 1 (default)
-		else if (BitmapHandle.BitsPerPixel > 0 && BitmapHandle.BitsPerPixel < 24)
+		else if (OrgImageBitmapHandle.BitsPerPixel > 0 && OrgImageBitmapHandle.BitsPerPixel < 24)
 		{
-			imageDicom.m_stImageInfo.m_nSamplesPerPixel = 1;
+			dsImage.m_stImageInfo.m_nSamplesPerPixel = 1;
 		}
 		else
 		{
@@ -287,18 +291,18 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 		}
 	}
 
-	imageDicom.m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(imageDicom.m_stImageInfo.m_nBitsPerPixel);
-	imageDicom.m_stImageInfo.m_nTotalAllocatedBytes = (UINT)(imageDicom.m_stImageInfo.m_nBytesPerPixel*imageDicom.m_stImageInfo.m_nSamplesPerPixel);
-	imageDicom.m_stImageInfo.m_nWidth = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nWidth;
-	imageDicom.m_stImageInfo.m_nHeight = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nHeight;
-	int nBytesPerLineX = ((imageDicom.m_stImageInfo.m_nWidth * imageDicom.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
-	int nBytesPerLineY = ((imageDicom.m_stImageInfo.m_nHeight * imageDicom.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
-	imageDicom.m_stImageInfo.m_nWidth = nBytesPerLineX / imageDicom.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
-	imageDicom.m_stImageInfo.m_nHeight = nBytesPerLineY / imageDicom.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
-	imageDicom.m_stImageInfo.m_nBytesPerLine = imageDicom.m_stImageInfo.m_nWidth * imageDicom.m_stImageInfo.m_nTotalAllocatedBytes;
+	dsImage.m_stImageInfo.m_nBytesPerPixel = (UINT)Bits2Bytes(dsImage.m_stImageInfo.m_nBitsPerPixel);
+	dsImage.m_stImageInfo.m_nTotalAllocatedBytes = (UINT)(dsImage.m_stImageInfo.m_nBytesPerPixel*dsImage.m_stImageInfo.m_nSamplesPerPixel);
+	dsImage.m_stImageInfo.m_nWidth = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nWidth;
+	dsImage.m_stImageInfo.m_nHeight = m_pDisplayDicomDS->m_aryDicomImage.GetAt(m_nCurFrameIndex).m_stImageInfo.m_nHeight;
+	int nBytesPerLineX = ((dsImage.m_stImageInfo.m_nWidth * dsImage.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+	int nBytesPerLineY = ((dsImage.m_stImageInfo.m_nHeight * dsImage.m_stImageInfo.m_nTotalAllocatedBytes) / 4) * 4;
+	dsImage.m_stImageInfo.m_nWidth = nBytesPerLineX / dsImage.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+	dsImage.m_stImageInfo.m_nHeight = nBytesPerLineY / dsImage.m_stImageInfo.m_nTotalAllocatedBytes;	// rounded by four
+	dsImage.m_stImageInfo.m_nBytesPerLine = dsImage.m_stImageInfo.m_nWidth * dsImage.m_stImageInfo.m_nTotalAllocatedBytes;
 
-	imageDicom.m_stImageInfo.m_fW1 = 0.0f;
-	imageDicom.m_stImageInfo.m_fW2 = Bits2MaxValue(imageDicom.m_stImageInfo.m_nBitsPerPixel);
+	dsImage.m_stImageInfo.m_fW1 = 0.0f;
+	dsImage.m_stImageInfo.m_fW2 = Bits2MaxValue(dsImage.m_stImageInfo.m_nBitsPerPixel);
 	//
 	// Get W/L
 	L_DOUBLE dWindowCenter = 0;
@@ -308,11 +312,11 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 	if (pElement && pElement->nLength)
 	{
 		dWindowCenter = *(pDicomParser->GetDoubleValue(pElement, 0, 1));
-		imageDicom.m_stImageInfo.m_nW1 = (int)dWindowCenter;
+		dsImage.m_stImageInfo.m_nW1 = (int)dWindowCenter;
 	}
 	else
 	{
-		imageDicom.m_stImageInfo.m_nW1 = (int)imageDicom.m_stImageInfo.m_fW1;
+		dsImage.m_stImageInfo.m_nW1 = (int)dsImage.m_stImageInfo.m_fW1;
 	}
 
 	// Window Width
@@ -320,17 +324,25 @@ void CStudyViewer::LoadImageFromDcm(CDicomImage& imageDicom)
 	if (pElement && pElement->nLength)
 	{
 		dWindowWidth = *(pDicomParser->GetDoubleValue(pElement, 0, 1));
-		imageDicom.m_stImageInfo.m_nW2 = (int)dWindowWidth;
+		dsImage.m_stImageInfo.m_nW2 = (int)dWindowWidth;
 	}
 	else
 	{
-		imageDicom.m_stImageInfo.m_nW2 = (int)imageDicom.m_stImageInfo.m_fW2;
+		dsImage.m_stImageInfo.m_nW2 = (int)dsImage.m_stImageInfo.m_fW2;
 	}
 	//
+	BITMAPHANDLE OverlayBitmapHandle;
+	if (pDicomParser->GetOverlayImageFromOrigin(&OrgImageBitmapHandle, &OverlayBitmapHandle) > 0)
+	{
+		dsImage.LoadDicomImage(&OrgImageBitmapHandle, &OverlayBitmapHandle);
+	}
+	else
+	{
+		dsImage.LoadDicomImage(&OrgImageBitmapHandle);
+	}
 
-	imageDicom.LoadDicomImage(&BitmapHandle);
 	
-	L_FreeBitmap(&BitmapHandle);
+	L_FreeBitmap(&OrgImageBitmapHandle);
 
 	pDicomParser->ResetDS();
 }
@@ -383,6 +395,17 @@ void CStudyViewer::Init(INT_PTR nCurSeriesIndex, INT_PTR nCurInstanceIndex, INT_
 
 	ClearLocalizerPoints();
 
+	/*
+	if (m_hLImgControl == nullptr)
+	{
+		if (CreateLEADImageList() != SUCCESS)
+		{
+			MessageBox(TEXT("Error creating image list control"), TEXT("Error"), MB_OK);
+			return;
+		}
+	}
+	*/
+
 	RedrawWnd();
 }
 
@@ -401,6 +424,59 @@ BOOL CStudyViewer::CreateCtrl(CWnd* pParent)
 
 	return TRUE;
 }
+/*
+L_INT CStudyViewer::CreateLEADImageList()
+{
+	L_UINT32       uFlags;
+	LILSELOPTION   Opt;
+	LILITEMOPTION  MOpt;
+
+	GetClientRect(&m_rtCanvas);
+
+	m_hLImgControl = L_CreateImageListControl(WS_CHILD | WS_VISIBLE | WS_BORDER,
+		0,
+		0,
+		m_rtCanvas.Width(),			// 
+		m_rtCanvas.Height(),
+		this->GetSafeHwnd(),
+		IDC_IMGLISTCTRL,
+		RGB(128, 128, 128));
+
+	if (!IsWindow(m_hLImgControl))
+	{
+		return 0;
+	}
+
+	uFlags = L_GetDisplayMode();
+	uFlags |= DISPLAYMODE_RESAMPLE | DISPLAYMODE_SCALETOGRAY;
+	L_ImgListSetDisplayFlags(m_hLImgControl, uFlags);
+
+	// Enable / Disable selection style & method
+	L_ImgListGetSelOptions(m_hLImgControl, &Opt);
+	Opt.uStructSize = sizeof(LILSELOPTION);
+	Opt.uAllowSelection = ALLOWSELECTION_SINGLE;
+	Opt.uSelectionStyle = SELECTIONSTYLE_PRESSEDBUTTON;
+	L_ImgListSetSelOptions(m_hLImgControl, &Opt);
+
+	// Enable / Disable display text, and change the item size
+	memset(&MOpt, 0, sizeof(MOpt));
+	MOpt.uStructSize = sizeof(LILITEMOPTION);
+	L_ImgListGetItemOptions(m_hLImgControl, &MOpt);
+	MOpt.bDisplayItemText = TRUE;
+	MOpt.uWidth = 145;
+	MOpt.uHeight = 145;
+	L_ImgListSetItemOptions(m_hLImgControl, &MOpt);
+
+	// Enable / Disable keyboard
+	L_ImgListEnableKeyboard(m_hLImgControl, TRUE);
+
+	// Set scroll style Vert / Horz
+	L_ImgListSetScrollStyle(m_hLImgControl, SCROLLSTYLE_VERTICAL);
+
+	::SetFocus(m_hLImgControl);
+	return 1;
+}
+*/
 
 BOOL CStudyViewer::IsValidStudy(CStudy* pStudy)
 {
@@ -442,7 +518,6 @@ BOOL CStudyViewer::DrawInstanceImage(CDC* pDC)
 	bih.biClrUsed = 0;
 	bih.biClrImportant = 0;
 
-// 안되는데 이유를 모르겠다. 나중에 다시 확인해보자.
 	Graphics g(pDC->GetSafeHdc());
 
 	// 나중에 시간날떄 한번씩 써보자. enum InterpolationMode
@@ -650,6 +725,8 @@ void CStudyViewer::ChangeInstanceIndex(BOOL bIsIncrease)
 void CStudyViewer::ChangeSeriesIndex(BOOL bIsIncrease)
 {
 	INT_PTR nLastIndex = GetSeriesCount() - 1;
+	INT_PTR nLastInstanceIndex = m_pStudy->GetSeriesArray()->GetAt(nLastIndex)->GetInstanceArray()->GetCount() - 1;
+	INT_PTR nLastFrameIndex = m_pStudy->GetSeriesArray()->GetAt(nLastIndex)->GetInstanceArray()->GetAt(nLastInstanceIndex)->GetDicomDS()->m_aryDicomImage.GetCount() - 1;
 
 	if (bIsIncrease == TRUE)
 	{
@@ -671,8 +748,8 @@ void CStudyViewer::ChangeSeriesIndex(BOOL bIsIncrease)
 		if (m_nCurSeriesIndex <= 0)
 		{
 			m_nCurSeriesIndex = nLastIndex;
-			m_nCurInstanceIndex = 0;
-			m_nCurFrameIndex = 0;
+			m_nCurInstanceIndex = nLastInstanceIndex;
+			m_nCurFrameIndex = nLastFrameIndex;
 		}
 		else
 		{
@@ -981,6 +1058,12 @@ BOOL CStudyViewer::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: Add your message handler code here and/or call default
 
+	if ((m_pStudy == nullptr) ||
+		(m_pDisplayDicomDS == nullptr))
+	{
+		CWnd::OnMouseWheel(nFlags, zDelta, pt);
+	}
+
 	ClearLocalizerPoints();
 
 	if (nFlags & MK_SHIFT)
@@ -994,8 +1077,6 @@ BOOL CStudyViewer::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 	return CWnd::OnMouseWheel(nFlags, zDelta, pt);
 }
-
-
 
 void CStudyViewer::OnLButtonDown(UINT nFlags, CPoint point)
 {

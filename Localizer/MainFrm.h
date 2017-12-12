@@ -39,6 +39,7 @@ public:
 
 protected:
 	CArray<CStudy*, CStudy*> m_aryStudy;
+	
 
 protected:  // control bar embedded members
 	CMFCMenuBar       m_wndMenuBar;
@@ -58,6 +59,8 @@ protected:
 	void AddSeries(CLLDicomDS dsLLdicomDS);
 	void AddInstance(CLLDicomDS dsLLdicomDS);
 
+	void FindFileInDirectory(CString strPath, CStringArray& aryPath);
+
 // Generated message map functions
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -65,10 +68,10 @@ protected:
 	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
 	afx_msg void OnApplicationLook(UINT id);
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
+	afx_msg void OnFileOpenfolder();
+	afx_msg void OnFileOpen();
 	DECLARE_MESSAGE_MAP()
 
-public:
-	afx_msg void OnFileOpen();
 };
 
 

@@ -3,6 +3,7 @@
 #include "LLDicomds.h"
 #include "DicomImage.h"
 
+class CDicomImage;
 class CInstance :
 	public CObject
 {

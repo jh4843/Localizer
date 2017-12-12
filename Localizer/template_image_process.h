@@ -36,6 +36,8 @@ template <class IN_TYPE, class OUT_TYPE> BOOL window_level_image(IN_TYPE* pIn, O
 template <class IN_TYPE, class OUT_TYPE> BOOL window_level_invert_image(IN_TYPE* pIn, OUT_TYPE* pOut, UINT nInUsingBits, UINT nOutUsingBits, UINT nInBytesPerLine, UINT nOutBytesPerLine, UINT nWidth, UINT nHeight, int nW1, int nW2);
 template <class IN_TYPE, class OUT_TYPE, class LUT_TYPE> BOOL window_level_lut_image(IN_TYPE* pIn, OUT_TYPE* pOut, LUT_TYPE *pLut, UINT nInUsingBits, UINT nOutUsingBits, UINT nLutUsingBits, UINT nInBytesPerLine, UINT nOutBytesPerLine, UINT nWidth, UINT nHeight, int nW1, int nW2);
 
+template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOverlayInput, OUT_TYPE* pOut, UINT nInBitsPerPixel, UINT nInBytePerLine, UINT nInHeight, UINT nOutMaxValue);
+
 template <class TYPE> BOOL mask_circle_mask_data(TYPE* pMask, UINT nWidth, UINT nHeight, UINT nCircleMask);
 
 template <RGBTRIPLE*> BOOL make_histogram_data(RGBTRIPLE** pImage, double* pHistogram, WORD* pMask, UINT nWidth, UINT nHeight, UINT nUsingBits, double& max_histogram);
@@ -1494,6 +1496,67 @@ template <class IN_TYPE, class OUT_TYPE, class LUT_TYPE> BOOL window_level_lut_i
 #endif
 
 	return TRUE;
+}
+
+template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOverlayInput, OUT_TYPE* pOut, UINT nInBitsPerPixel, UINT nInBytePerLine, UINT nInHeight, UINT nOutMaxValue)
+{
+	BOOL bRes = FALSE;
+
+	if (!pOverlayInput)
+	{
+		return FALSE;
+	}
+
+	if (!pOut)
+	{
+		return FALSE;
+	}
+
+	if (nInBitsPerPixel < 0)
+	{
+		return FALSE;
+	}
+
+	if (nInBytePerLine < 0)
+	{
+		return FALSE;
+	}
+
+	if (nInHeight < 0)
+	{
+		return FALSE;
+	}
+	
+	if (nInBitsPerPixel == 1)
+	{
+		INT_PTR nBit = 0;
+		INT_PTR nOverlayTotalByte = nInBytePerLine * nInHeight;
+		char cMask = 0x01;
+		char cInput;
+		char cBitValue;
+
+		// Need to change for fitting image.
+		for (INT_PTR iOverlaycByte = 0; iOverlaycByte < nOverlayTotalByte; iOverlaycByte++)
+		{
+			for (INT_PTR iOverlayBit = 7; iOverlayBit >= 0; iOverlayBit--)
+			{
+				cInput = *pOverlayInput >> iOverlayBit;
+				cBitValue = cInput & cMask;
+
+				if (cBitValue > 0)
+				{
+					*pOut = nOutMaxValue;
+				}
+				//
+				pOut++;
+			}
+			pOverlayInput++;
+		}
+
+		bRes = TRUE;
+	}
+	
+	return bRes;
 }
 
 template <class TYPE> BOOL mask_circle_mask_data(TYPE* pMask, UINT nWidth, UINT nHeight, UINT nCircleMask)

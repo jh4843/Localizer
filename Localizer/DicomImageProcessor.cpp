@@ -187,3 +187,31 @@ BOOL CDicomImageProcessor::AdjustDICOMLut(void* pImage, RGBQUAD* pLUT, CDicomIma
 
 	return bRet;
 }
+
+BOOL CDicomImageProcessor::BurnOverlayOnImage(BYTE* pIn, BYTE* pOut, UINT nOutAllocByte, UINT nInBitsPerPixel, UINT nInBytePerLine, UINT nInHeight, UINT nOutMaxValue)
+{
+	BOOL bRes = FALSE;
+
+	switch (nOutAllocByte)
+	{
+	case 2:
+		bRes = burn_overlay_on_image<BYTE, WORD>((BYTE*)pIn,
+			(WORD*)pOut,
+			(UINT)nInBitsPerPixel,
+			(UINT)nInBytePerLine,
+			(UINT)nInHeight,
+			(UINT)nOutMaxValue);
+		break;
+	case 1:
+	default:
+		bRes = burn_overlay_on_image<BYTE, BYTE>((BYTE*)pIn,
+			(BYTE*)pOut,
+			(UINT)nInBitsPerPixel,
+			(UINT)nInBytePerLine,
+			(UINT)nInHeight,
+			(UINT)nOutMaxValue);
+		break;
+	}
+
+	return bRes;
+}

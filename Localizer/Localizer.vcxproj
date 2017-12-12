@@ -207,6 +207,7 @@
     <ClInclude Include="LocalizerCore.h" />
     <ClInclude Include="OleDataSourceEx.h" />
     <ClInclude Include="OleDropTargetEx.h" />
+    <ClInclude Include="OverLayImage.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="StudyViewer.h" />
     <ClInclude Include="Localizer.h" />
@@ -236,6 +237,7 @@
     <ClCompile Include="LocalizerCore.cpp" />
     <ClCompile Include="OleDataSourceEx.cpp" />
     <ClCompile Include="OleDropTargetEx.cpp" />
+    <ClCompile Include="OverLayImage.cpp" />
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="StudyViewer.cpp" />
     <ClCompile Include="Localizer.cpp" />

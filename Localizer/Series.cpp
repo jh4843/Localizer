@@ -40,7 +40,12 @@ void CSeries::AddInstance(CLLDicomDS dsLLDicomDS)
 {
 	CInstance* pInstance = new CInstance(dsLLDicomDS);
 	BOOL bFindSeries = FALSE;
+	INT_PTR iInsertIndex = -1;
+	CInstance* pOldInstanceInfo;
+	long lCurInstanceNumber = 0;
+	long lOldInstanceNumber = 0;
 
+	
 	for (INT_PTR iArray = 0; iArray < m_arrInstance.GetCount(); iArray++)
 	{
 		CInstance* pInstanceInfo = m_arrInstance.GetAt(iArray);
@@ -48,9 +53,28 @@ void CSeries::AddInstance(CLLDicomDS dsLLDicomDS)
 		{
 			return;
 		}
+
+		lCurInstanceNumber = pInstanceInfo->GetDicomDS()->m_dcmHeaderInfo.m_lInstanceNumber;
+
+		if (dsLLDicomDS.m_dcmHeaderInfo.m_lInstanceNumber > lCurInstanceNumber)
+		{
+			if (lOldInstanceNumber < lCurInstanceNumber)
+			{
+				iInsertIndex = iArray;
+				pOldInstanceInfo = pInstanceInfo;
+				lOldInstanceNumber = pOldInstanceInfo->GetDicomDS()->m_dcmHeaderInfo.m_lInstanceNumber;
+			}
+		}
 	}
 
-	m_arrInstance.Add(pInstance);
+	if (iInsertIndex < 0)
+	{
+		m_arrInstance.Add(pInstance);
+	}
+	else
+	{
+		m_arrInstance.InsertAt(iInsertIndex+1, pInstance);
+	}
 
 	return;
 }

@@ -58,6 +58,7 @@ BEGIN
     "#include ""afxprint.rc""        // printing/print preview resources\r\n"
     "#include ""afxribbon.rc""        // MFC ribbon and control bar resources\r\n"
     "#endif\r\n"
+    "#include ""XFolderDialog.rc""\r\n"
     "#endif\r\n"
     "\0"
 END
@@ -105,6 +106,7 @@ IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
 IDR_MAINFRAME TOOLBAR 16, 15
 BEGIN
     BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPENFOLDER
     BUTTON      ID_FILE_OPEN
     BUTTON      ID_FILE_SAVE
     SEPARATOR
@@ -113,12 +115,14 @@ BEGIN
     BUTTON      ID_EDIT_PASTE
     SEPARATOR
     BUTTON      ID_FILE_PRINT
+    SEPARATOR
     BUTTON      ID_APP_ABOUT
 END
 
 IDR_MAINFRAME_256 TOOLBAR 16, 15
 BEGIN
     BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPENFOLDER
     BUTTON      ID_FILE_OPEN
     BUTTON      ID_FILE_SAVE
     SEPARATOR
@@ -141,6 +145,7 @@ BEGIN
     POPUP "&File",                          65535,MFT_STRING,MFS_ENABLED
     BEGIN
         MENUITEM "&New\tCtrl+N",                ID_FILE_NEW,MFT_STRING,MFS_ENABLED
+        MENUITEM "Open Folder",                 ID_FILE_OPENFOLDER,MFT_STRING,MFS_ENABLED
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN,MFT_STRING,MFS_ENABLED
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE,MFT_STRING,MFS_ENABLED
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS,MFT_STRING,MFS_ENABLED
