@@ -52,6 +52,16 @@ CString CLLDicomDS::GetInstanceID()
 	return m_dcmHeaderInfo.m_strSOPInstanceUID;
 }
 
+long CLLDicomDS::GetSeriesNumber()
+{
+	return m_dcmHeaderInfo.m_lSeriesNumber;
+}
+
+long CLLDicomDS::GetInstanceNumber()
+{
+	return m_dcmHeaderInfo.m_lInstanceNumber;
+}
+
 CString CLLDicomDS::GetPatientOrientationUp(INT_PTR nFrameIndex)
 {
 	CString strRes = _T("[");

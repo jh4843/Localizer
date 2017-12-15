@@ -590,12 +590,12 @@ BOOL CStudyViewer::DrawImageInfo(CDC* pDC)
 		return FALSE;
 	}
 
-	INT_PTR nMargin = 5;
+	INT_PTR nMargin = 3;
 	INT_PTR nSpace = 1;
 	COLORREF crTextColor = RGB(255, 255, 255);
 	COLORREF crShadowColor = RGB(0, 0, 0);
 
-	INT_PTR nFontSize = 100;
+	INT_PTR nFontSize = 85;
 	CFont font;
 	font.CreatePointFont(nFontSize, L"Segoe UI");
 
@@ -613,12 +613,19 @@ BOOL CStudyViewer::DrawImageInfo(CDC* pDC)
 	CString strInstanceID = m_pDisplayDicomDS->GetInstanceID();
 	aryImageInfo.Add(strInstanceID);
 
+	CString strSeriesNumber;
+	strSeriesNumber.Format(_T("Series : %d"), m_pDisplayDicomDS->GetSeriesNumber());
+	aryImageInfo.Add(strSeriesNumber);
+	CString strInstanceNumber;
+	strInstanceNumber.Format(_T("Instance : %d"), m_pDisplayDicomDS->GetInstanceNumber());
+	aryImageInfo.Add(strInstanceNumber);
+
 	for (INT_PTR nIndex = 0; nIndex < aryImageInfo.GetCount(); nIndex++)
 	{
 		pDC->SetTextColor(crTextColor);
 		pDC->TextOut(nPosX, nPosY, aryImageInfo.GetAt(nIndex));
 
-		nPosY += 20 + nSpace;
+		nPosY += 10 + nSpace;
 	}
 
 	pDC->SelectObject(pOldFont);
@@ -766,7 +773,7 @@ void CStudyViewer::ChangeInstanceImageByWheel(short zDelta)
 
 	if (zDelta > 0)
 	{
-		if (m_nCurFrameIndex  == nLastFrameIndex && nLastFrameIndex == 0)
+		if (m_nCurFrameIndex  == nLastFrameIndex || nLastFrameIndex == 0)
 		{
 			ChangeInstanceIndex(FALSE);
 			m_nCurFrameIndex = 0;
@@ -782,7 +789,7 @@ void CStudyViewer::ChangeInstanceImageByWheel(short zDelta)
 	}
 	else
 	{
-		if (m_nCurFrameIndex == nLastFrameIndex && nLastFrameIndex == 0)
+		if (m_nCurFrameIndex == nLastFrameIndex || nLastFrameIndex == 0)
 		{
 			ChangeInstanceIndex(TRUE);
 			m_nCurFrameIndex = 0;

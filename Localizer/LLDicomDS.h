@@ -79,6 +79,9 @@ public:
 	CString GetSeriesID();
 	CString GetInstanceID();
 
+	long GetSeriesNumber();
+	long GetInstanceNumber();
+
 	CString GetPatientOrientationUp(INT_PTR nFrameIndex = 0);
 	CString GetPatientOrientationDown(INT_PTR nFrameIndex = 0);
 	CString GetPatientOrientationLeft(INT_PTR nFrameIndex = 0);

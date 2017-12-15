@@ -25,6 +25,8 @@ public:
 
 	// Get
 	CArray<CInstance*, CInstance*>* GetInstanceArray();
+	CLLDicomDS* GetDicomDS();
+
 
 	// 
 	CSeries& operator=(const CSeries& obj);

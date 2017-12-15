@@ -306,11 +306,11 @@ INT_PTR CLayoutManager::GetNeedToAddViewerCount(INT_PTR nMinAddCount)
 	INT_PTR nResCount = DEFAULT_LAYOUT_COUNT;
 	INT_PTR nTotalMinViewCount = nMinAddCount + m_nViewerCount;
 
-	if (nTotalMinViewCount > 4 && nTotalMinViewCount < 9)
+	if (nTotalMinViewCount > 4 && nTotalMinViewCount <= 9)
 	{
 		nResCount = 9;
 	}
-	else if (nTotalMinViewCount > 9 && nTotalMinViewCount < 16)
+	else if (nTotalMinViewCount > 9 && nTotalMinViewCount <= 16)
 	{
 		nResCount = 16;
 	}

@@ -39,11 +39,10 @@ BOOL CSeries::IsSameSeriesID(CString strSeriesId)
 void CSeries::AddInstance(CLLDicomDS dsLLDicomDS)
 {
 	CInstance* pInstance = new CInstance(dsLLDicomDS);
-	BOOL bFindSeries = FALSE;
 	INT_PTR iInsertIndex = -1;
 	CInstance* pOldInstanceInfo;
-	long lCurInstanceNumber = 0;
-	long lOldInstanceNumber = 0;
+	long lCurInstanceNumber = -1;
+	long lOldInstanceNumber = -1;
 
 	
 	for (INT_PTR iArray = 0; iArray < m_arrInstance.GetCount(); iArray++)
@@ -56,9 +55,10 @@ void CSeries::AddInstance(CLLDicomDS dsLLDicomDS)
 
 		lCurInstanceNumber = pInstanceInfo->GetDicomDS()->m_dcmHeaderInfo.m_lInstanceNumber;
 
-		if (dsLLDicomDS.m_dcmHeaderInfo.m_lInstanceNumber > lCurInstanceNumber)
+		if (dsLLDicomDS.m_dcmHeaderInfo.m_lInstanceNumber < lCurInstanceNumber)
 		{
-			if (lOldInstanceNumber < lCurInstanceNumber)
+			if (lOldInstanceNumber == -1 ||
+				lOldInstanceNumber > lCurInstanceNumber)
 			{
 				iInsertIndex = iArray;
 				pOldInstanceInfo = pInstanceInfo;
@@ -73,7 +73,7 @@ void CSeries::AddInstance(CLLDicomDS dsLLDicomDS)
 	}
 	else
 	{
-		m_arrInstance.InsertAt(iInsertIndex+1, pInstance);
+		m_arrInstance.InsertAt(iInsertIndex, pInstance);
 	}
 
 	return;
@@ -87,6 +87,11 @@ void CSeries::UpdateDicomDs(CLLDicomDS dsLLDicom)
 CArray<CInstance*, CInstance*>* CSeries::GetInstanceArray()
 {
 	return &m_arrInstance;
+}
+
+CLLDicomDS* CSeries::GetDicomDS()
+{
+	return &m_dsDicomDS;
 }
 
 CSeries& CSeries::operator=(const CSeries& obj)

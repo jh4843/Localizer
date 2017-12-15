@@ -36,7 +36,7 @@ template <class IN_TYPE, class OUT_TYPE> BOOL window_level_image(IN_TYPE* pIn, O
 template <class IN_TYPE, class OUT_TYPE> BOOL window_level_invert_image(IN_TYPE* pIn, OUT_TYPE* pOut, UINT nInUsingBits, UINT nOutUsingBits, UINT nInBytesPerLine, UINT nOutBytesPerLine, UINT nWidth, UINT nHeight, int nW1, int nW2);
 template <class IN_TYPE, class OUT_TYPE, class LUT_TYPE> BOOL window_level_lut_image(IN_TYPE* pIn, OUT_TYPE* pOut, LUT_TYPE *pLut, UINT nInUsingBits, UINT nOutUsingBits, UINT nLutUsingBits, UINT nInBytesPerLine, UINT nOutBytesPerLine, UINT nWidth, UINT nHeight, int nW1, int nW2);
 
-template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOverlayInput, OUT_TYPE* pOut, UINT nInBitsPerPixel, UINT nInBytePerLine, UINT nInHeight, UINT nOutMaxValue);
+template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOverlayInput, OUT_TYPE* pOut, UINT nOvlBitsPerPixel, UINT nOvlBytePerLine, UINT nOutHeight, UINT nOutWidth, UINT nOutMaxValue);
 
 template <class TYPE> BOOL mask_circle_mask_data(TYPE* pMask, UINT nWidth, UINT nHeight, UINT nCircleMask);
 
@@ -1498,7 +1498,7 @@ template <class IN_TYPE, class OUT_TYPE, class LUT_TYPE> BOOL window_level_lut_i
 	return TRUE;
 }
 
-template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOverlayInput, OUT_TYPE* pOut, UINT nInBitsPerPixel, UINT nInBytePerLine, UINT nInHeight, UINT nOutMaxValue)
+template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOverlayInput, OUT_TYPE* pOut, UINT nOvlBitsPerPixel, UINT nOvlBytePerLine, UINT nOutHeight, UINT nOutWidth, UINT nOutMaxValue)
 {
 	BOOL bRes = FALSE;
 
@@ -1512,34 +1512,43 @@ template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOv
 		return FALSE;
 	}
 
-	if (nInBitsPerPixel < 0)
+	if (nOvlBitsPerPixel < 0)
 	{
 		return FALSE;
 	}
 
-	if (nInBytePerLine < 0)
+	if (nOvlBytePerLine < 0)
 	{
 		return FALSE;
 	}
 
-	if (nInHeight < 0)
+	if (nOutHeight < 0)
 	{
 		return FALSE;
 	}
 	
-	if (nInBitsPerPixel == 1)
+	if (nOvlBitsPerPixel == 1)
 	{
 		INT_PTR nBit = 0;
-		INT_PTR nOverlayTotalByte = nInBytePerLine * nInHeight;
+		INT_PTR nOverlayTotalByte = nOvlBytePerLine * nOutHeight;
+		
 		char cMask = 0x01;
 		char cInput;
 		char cBitValue;
 
+		BOOL bNeedLineChange;
+		INT_PTR iOutLineByte = 0;
+		INT_PTR iOverlayLineByte = 0;
 		// Need to change for fitting image.
-		for (INT_PTR iOverlaycByte = 0; iOverlaycByte < nOverlayTotalByte; iOverlaycByte++)
+		for (INT_PTR iHeight = 0; iHeight < nOutHeight; iHeight++)
 		{
 			for (INT_PTR iOverlayBit = 7; iOverlayBit >= 0; iOverlayBit--)
 			{
+				if (iOutLineByte >= nOutWidth)
+				{
+					continue;
+				}
+
 				cInput = *pOverlayInput >> iOverlayBit;
 				cBitValue = cInput & cMask;
 
@@ -1549,8 +1558,23 @@ template <class IN_TYPE, class OUT_TYPE> BOOL burn_overlay_on_image(IN_TYPE* pOv
 				}
 				//
 				pOut++;
+				iOutLineByte++;
 			}
+
+			iOverlayLineByte++;
 			pOverlayInput++;
+
+			// sometime, overlay byteperline is over out image's width
+			if (iOverlayLineByte < nOvlBytePerLine)
+			{
+				iHeight--;
+			}
+			else
+			{
+				iOverlayLineByte = 0;
+				iOutLineByte = 0;
+			}
+				
 		}
 
 		bRes = TRUE;

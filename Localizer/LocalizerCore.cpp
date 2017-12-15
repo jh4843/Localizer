@@ -128,7 +128,7 @@ void CLocalizerCore::CalcReferenceLine()
 	GeometryMath::Line lineDestRect[4];
 	GeometryMath::Vector3 vec3SrcRect[4];
 	GeometryMath::Vector3 vec3DestRect[4];
-	GeometryMath::Vector3 vecDrawPoint[2];
+	GeometryMath::Vector3 vecDrawPoint[4];
 
 	GeometryMath::Vector3 vec3Start;
 	GeometryMath::Vector3 vec3End;
@@ -237,15 +237,16 @@ void CLocalizerCore::CalcReferenceLine()
 			{
 				iNext = iSide + 1;
 			}
-			
-			vec3Start.set(fDestRotatedPosX[iSide], fDestRotatedPosY[iSide], fDestRotatedPosZ[iSide]);
-			vec3End.set(fDestRotatedPosX[iNext], fDestRotatedPosY[iNext], fDestRotatedPosZ[iNext]);
+
+			vec3Start.set(fSrcRotatedPosX[iSide], fSrcRotatedPosY[iSide], fSrcRotatedPosZ[iSide]);
+			vec3End.set(fSrcRotatedPosX[iNext], fSrcRotatedPosY[iNext], fSrcRotatedPosZ[iNext]);
 
 			lineDestRect[iSide].setWith2Points(vec3Start, vec3End);
 		}
 
 		nIntersectCount = 0;
 		float fOffset = 0.01;	// sometime epsilon data occur
+		BOOL bCanDraw = FALSE;
 		for (iSide = 0; iSide < 4; iSide++)
 		{
 			GeometryMath::Vector3 vec3Temp = lineDestRect[iSide].intersect(lineIntersect);
@@ -253,16 +254,67 @@ void CLocalizerCore::CalcReferenceLine()
 				vec3Temp.x >= (fDestRotatedPosX[0] - fOffset) &&
 				vec3Temp.x <= (fDestRotatedPosX[2] + fOffset) &&
 				vec3Temp.y >= (fDestRotatedPosY[0] - fOffset) &&
-				vec3Temp.y <= (fDestRotatedPosY[2] + fOffset)	)
+				vec3Temp.y <= (fDestRotatedPosY[2] + fOffset) &&
+				vec3Temp.z >= (fDestRotatedPosZ[0] - fOffset) &&
+				vec3Temp.z <= (fDestRotatedPosZ[2] + fOffset))
 			{
 				vecDrawPoint[nIntersectCount++] = vec3Temp;
 			}
 
- 			if (nIntersectCount >= 2)
- 				break;
+			if (nIntersectCount >= 2)
+			{
+				bCanDraw = TRUE;
+				break;
+			}
 		}
-		
-		if (nIntersectCount == 2)
+
+		if (bCanDraw == FALSE)
+		{
+			INT_PTR iSide = 0;
+			for (iSide = 0; iSide < 4; iSide++)
+			{
+				INT_PTR iNext;
+				if (iSide == 3)
+				{
+					iNext = 0;
+				}
+				else
+				{
+					iNext = iSide + 1;
+				}
+
+				vec3Start.set(fDestRotatedPosX[iSide], fDestRotatedPosY[iSide], fDestRotatedPosZ[iSide]);
+				vec3End.set(fDestRotatedPosX[iNext], fDestRotatedPosY[iNext], fDestRotatedPosZ[iNext]);
+
+				lineDestRect[iSide].setWith2Points(vec3Start, vec3End);
+			}
+
+			nIntersectCount = 0;
+			float fOffset = 0.01;	// sometime epsilon data occur
+			for (iSide = 0; iSide < 4; iSide++)
+			{
+				GeometryMath::Vector3 vec3Temp = lineDestRect[iSide].intersect(lineIntersect);
+
+				if (vec3Temp != GeometryMath::Vector3(INFINITY, INFINITY, INFINITY) &&
+					vec3Temp.x >= (fDestRotatedPosX[0] - fOffset) &&
+					vec3Temp.x <= (fDestRotatedPosX[2] + fOffset) &&
+					vec3Temp.y >= (fDestRotatedPosY[0] - fOffset) &&
+					vec3Temp.y <= (fDestRotatedPosY[2] + fOffset) &&
+					vec3Temp.z >= (fDestRotatedPosZ[0] - fOffset) &&
+					vec3Temp.z <= (fDestRotatedPosZ[2] + fOffset))
+				{
+					vecDrawPoint[nIntersectCount++] = vec3Temp;
+				}
+
+				if (nIntersectCount >= 2)
+				{
+					bCanDraw = TRUE;
+					break;
+				}
+			}
+		}
+
+		if (bCanDraw == TRUE)
 		{
 			ptStart = Gdiplus::PointF(vecDrawPoint[0].x / stDestLocalizerImageInfo.m_fPixelXSpacing + 0.5, vecDrawPoint[0].y / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);
 			ptEnd = Gdiplus::PointF(vecDrawPoint[1].x / stDestLocalizerImageInfo.m_fPixelXSpacing + 0.5, vecDrawPoint[1].y / stDestLocalizerImageInfo.m_fPixelYSpacing + 0.5);

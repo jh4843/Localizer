@@ -44,14 +44,32 @@ void CStudy::AddSeries(CLLDicomDS dsLLDicomDS)
 	CSeries* pSeries = new CSeries(dsLLDicomDS);
 	BOOL bFindSeries = FALSE;
 
+	INT_PTR iInsertIndex = -1;
+	CSeries* pOldSeriesInfo;
+	long lCurSeriesNumber = -1;
+	long lOldSeriesNumber = -1;
+
 	for (INT_PTR iArray = 0; iArray < m_arrSeries.GetCount(); iArray++)
 	{
 		CSeries* pSeriesInfo = m_arrSeries.GetAt(iArray);
 		if (pSeriesInfo->IsSameSeriesID(dsLLDicomDS.m_dcmHeaderInfo.m_strSeriesInstanceUID) == TRUE)
 		{
-			pSeries = pSeriesInfo;
 			bFindSeries = TRUE;
+			pSeries = pSeriesInfo;
 			break;
+		}
+
+		lCurSeriesNumber = pSeriesInfo->GetDicomDS()->m_dcmHeaderInfo.m_lSeriesNumber;
+
+		if (dsLLDicomDS.m_dcmHeaderInfo.m_lSeriesNumber < lCurSeriesNumber)
+		{
+			if (lOldSeriesNumber == -1 ||
+				lOldSeriesNumber > lCurSeriesNumber)
+			{
+				iInsertIndex = iArray;
+				pOldSeriesInfo = pSeriesInfo;
+				lOldSeriesNumber = pOldSeriesInfo->GetDicomDS()->m_dcmHeaderInfo.m_lSeriesNumber;
+			}
 		}
 	}
 
@@ -59,7 +77,14 @@ void CStudy::AddSeries(CLLDicomDS dsLLDicomDS)
 
 	if (bFindSeries == FALSE)
 	{
-		m_arrSeries.Add(pSeries);
+		if (iInsertIndex < 0)
+		{
+			m_arrSeries.Add(pSeries);
+		}
+		else
+		{
+			m_arrSeries.InsertAt(iInsertIndex, pSeries);
+		}
 	}
 
 	return;

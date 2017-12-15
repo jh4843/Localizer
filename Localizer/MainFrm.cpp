@@ -369,6 +369,8 @@ void CMainFrame::OnFileOpen()
 	
 	if (dlgDcm.DoModal() == IDOK)
 	{
+		theApp.OnCloseAll();
+
 		POSITION pos = dlgDcm.GetStartPosition();
 		while (pos)
 		{

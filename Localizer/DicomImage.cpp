@@ -91,7 +91,8 @@ BOOL CDicomImage::LoadDicomImage(pBITMAPHANDLE pBitmapHandle, pBITMAPHANDLE pOve
 				(UINT)m_stImageInfo.m_nTotalAllocatedBytes,
 				(UINT)pOverlayBitmapHandle->BitsPerPixel,
 				(UINT)pOverlayBitmapHandle->BytesPerLine,
-				(UINT)pOverlayBitmapHandle->Height,
+				(UINT)m_stImageInfo.m_nHeight,
+				(UINT)m_stImageInfo.m_nWidth,
 				(UINT)Bits2MaxValue(m_stImageInfo.m_nBitsPerPixel));
 
 			delete pImgProcessor;
